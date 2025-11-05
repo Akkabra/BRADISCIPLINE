@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero",
+      "description": "Man silhouette in a gym, hero image for landing page",
+      "imageUrl": "https://images.unsplash.com/photo-1699214493925-54c7e2fc8ef6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtYW4lMjBzaWxob3VldHRlJTIwZ3ltfGVufDB8fHx8MTc2MjM4NTY2NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "man silhouette gym"
+    }
+  ]
 }
