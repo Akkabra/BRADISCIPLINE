@@ -11,7 +11,6 @@
  * - /users/{userId}: Stores user profile information.
  * - /users/{userId}/daily_routines/{routineId}: Stores daily routines for each user.
  * - /users/{userId}/journals/{journalId}: Stores journal entries for each user.
- * - /users/{userId}/focus_routines/{focusRoutineId}: Stores daily focus objectives.
  * - /users/{userId}/family_events/{eventId}: Stores planned family connection events.
  * - /users/{userId}/connection_tasks/{taskId}: Stores repeatable family connection tasks.
  *
@@ -108,15 +107,6 @@ service cloud.firestore {
     }
     
     /**
-     * @description Rules for the /users/{userId}/focus_routines/{focusRoutineId} collection.
-     * @path /users/{userId}/focus_routines/{focusRoutineId}
-     * @principle Enforces that users can only manage their own focus routines.
-     */
-    match /users/{userId}/focus_routines/{focusRoutineId} {
-        allow get, list, create, update, delete: if isOwner(userId);
-    }
-
-    /**
      * @description Rules for the /users/{userId}/family_events/{eventId} subcollection.
      * @path /users/{userId}/family_events/{eventId}
      * @principle Enforces that users can only manage their own family events.
@@ -135,5 +125,3 @@ service cloud.firestore {
     }
   }
 }
-
-    

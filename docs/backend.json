@@ -30,81 +30,6 @@
         "email"
       ]
     },
-    "FocusRoutine": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "FocusRoutine",
-      "type": "object",
-      "description": "Represents a user's daily focus routine with three main objectives.",
-      "properties": {
-        "userId": {
-          "type": "string",
-          "description": "The UID of the user who owns this routine."
-        },
-        "date": {
-          "type": "string",
-          "format": "date",
-          "description": "The date for this routine in YYYY-MM-DD format."
-        },
-        "objective1": {
-          "type": "string",
-          "description": "The first main objective for the day."
-        },
-        "objective2": {
-          "type": "string",
-          "description": "The second main objective for the day."
-        },
-        "objective3": {
-          "type": "string",
-          "description": "The third main objective for the day."
-        },
-        "completed1": {
-          "type": "boolean",
-          "description": "Whether the first objective has been completed."
-        },
-        "completed2": {
-          "type": "boolean",
-          "description": "Whether the second objective has been completed."
-        },
-        "completed3": {
-          "type": "boolean",
-          "description": "Whether the third objective has been completed."
-        },
-        "difficulty1": {
-          "type": "string",
-          "description": "Difficulty of the first objective.",
-          "enum": ["easy", "medium", "hard"]
-        },
-        "difficulty2": {
-          "type": "string",
-          "description": "Difficulty of the second objective.",
-          "enum": ["easy", "medium", "hard"]
-        },
-        "difficulty3": {
-          "type": "string",
-          "description": "Difficulty of the third objective.",
-          "enum": ["easy", "medium", "hard"]
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the routine was created."
-        }
-      },
-      "required": [
-        "userId",
-        "date",
-        "objective1",
-        "objective2",
-        "objective3",
-        "completed1",
-        "completed2",
-        "completed3",
-        "difficulty1",
-        "difficulty2",
-        "difficulty3",
-        "createdAt"
-      ]
-    },
     "FamilyEvent": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "FamilyEvent",
@@ -234,26 +159,6 @@
         }
       },
       {
-        "path": "/users/{userId}/focus_routines/{focusRoutineId}",
-        "definition": {
-          "entityName": "FocusRoutine",
-          "schema": {
-            "$ref": "#/backend/entities/FocusRoutine"
-          },
-          "description": "Stores the daily focus objectives for each user. Path-based ownership ensures a user can only access their own routines.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user."
-            },
-            {
-              "name": "focusRoutineId",
-              "description": "The unique ID for the focus routine document."
-            }
-          ]
-        }
-      },
-      {
         "path": "/users/{userId}/family_events/{eventId}",
         "definition": {
           "entityName": "FamilyEvent",
@@ -294,7 +199,6 @@
         }
       }
     ],
-    "reasoning": "This Firestore structure is designed to support user authentication and data storage for the 'Bra Discipline' application. It prioritizes authorization independence and clear access patterns.\n\n*   **/users/{userId}**:  Stores user profiles.  This enables path-based ownership, simplifying security rules (only the authenticated user can access their own profile).\n*   **/users/{userId}/daily_routines/{routineId}**: Stores daily routine data specific to each user. This nested structure maintains the user's ownership and avoids mixing data with different access requirements. This path enables simple path-based ownership. By storing all daily routine data under the user's document, we can easily query and manage this data. Daily routine documents do not contain any user authorization data, as the user ID is implicit in the path.\n*   **/users/{userId}/journals/{journalId}**: Stores journal entries specific to each user. This nested structure maintains the user's ownership, which simplifies security rules.\n*   **/users/{userId}/focus_routines/{focusRoutineId}**: Stores a user's three daily objectives. This is structured as a subcollection to keep user-specific data logically grouped and to leverage path-based security rules for ownership.\n*   **/users/{userId}/family_events/{eventId}**: Stores planned family events. This nested structure ensures user ownership and simplifies security rules.\n*   **/users/{userId}/connection_tasks/{taskId}**: Stores family connection tasks. This subcollection also leverages path-based ownership for secure data access.\n\n\n**Authorization Independence:**\n\nAuthorization independence is achieved through path-based ownership for all user-related data. This eliminates the need for `get()` calls in security rules to determine access, making rules more efficient and robust.\n\n**QAPs (Rules are not Filters):**\n\nThe structure supports secure `list` operations (QAPs) because all documents within a collection share the same security requirements. Listing data under a user's document is secure because the path inherently restricts access to that user's own data. The homogeneous security posture within each collection ensures that rules are not used as filters."
+    "reasoning": "This Firestore structure is designed to support user authentication and data storage for the 'Bra Discipline' application. It prioritizes authorization independence and clear access patterns.\n\n*   **/users/{userId}**:  Stores user profiles.  This enables path-based ownership, simplifying security rules (only the authenticated user can access their own profile).\n*   **/users/{userId}/daily_routines/{routineId}**: Stores daily routine data specific to each user. This nested structure maintains the user's ownership and avoids mixing data with different access requirements. This path enables simple path-based ownership. By storing all daily routine data under the user's document, we can easily query and manage this data. Daily routine documents do not contain any user authorization data, as the user ID is implicit in the path.\n*   **/users/{userId}/journals/{journalId}**: Stores journal entries specific to each user. This nested structure maintains the user's ownership, which simplifies security rules.\n*   **/users/{userId}/family_events/{eventId}**: Stores planned family events. This nested structure ensures user ownership and simplifies security rules.\n*   **/users/{userId}/connection_tasks/{taskId}**: Stores family connection tasks. This subcollection also leverages path-based ownership for secure data access.\n\n\n**Authorization Independence:**\n\nAuthorization independence is achieved through path-based ownership for all user-related data. This eliminates the need for `get()` calls in security rules to determine access, making rules more efficient and robust.\n\n**QAPs (Rules are not Filters):**\n\nThe structure supports secure `list` operations (QAPs) because all documents within a collection share the same security requirements. Listing data under a user's document is secure because the path inherently restricts access to that user's own data. The homogeneous security posture within each collection ensures that rules are not used as filters."
   }
 }
-    
