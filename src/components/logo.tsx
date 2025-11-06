@@ -26,11 +26,12 @@ export function Logo({ className }: { className?: string }) {
         className
       )}
     >
-      <TiwazRune className="h-5 w-5" />
-      <div className="flex items-baseline gap-1.5 text-xl">
+      <TiwazRune className="h-full w-full transition-all group-hover:scale-110" />
+      <div className="hidden items-baseline gap-1.5 text-xl sm:flex">
         <span>BRA</span>
         <span className="text-foreground/80">DISCIPLINE</span>
       </div>
+      <span className="sr-only">BRA DISCIPLINE</span>
     </Link>
   );
 }
