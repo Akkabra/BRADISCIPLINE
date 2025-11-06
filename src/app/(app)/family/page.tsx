@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Check, Loader2, Plus } from "lucide-react"
+import { Calendar as CalendarIcon, Check, Loader2, Plus } from "lucide-react"
 import React, { useEffect, useState } from "react"
 import {
   Dialog,
@@ -18,8 +18,11 @@ import { Label } from "@/components/ui/label"
 import { useAuth, useCollection, useFirestore, useMemoFirebase } from "@/firebase"
 import { addDoc, collection, doc, serverTimestamp, updateDoc, query, orderBy, limit } from "firebase/firestore"
 import type { WithId } from "@/firebase"
-import { format } from "date-fns"
+import { format, setHours, setMinutes } from "date-fns"
 import { es } from 'date-fns/locale';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils"
 
 type ConnectionTask = {
     title: string;
@@ -123,7 +126,7 @@ export default function FamilyPage() {
                                     <p className="font-semibold">{latestEvent.activity}</p>
                                     <p className="text-sm text-muted-foreground">{formatDate(latestEvent.date)}</p>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => handleOpenDialog(latestEvent)}><Calendar className="h-4 w-4 mr-2" />Reprogramar</Button>
+                                <Button variant="outline" size="sm" onClick={() => handleOpenDialog(latestEvent)}><CalendarIcon className="h-4 w-4 mr-2" />Reprogramar</Button>
                             </div>
                            ) : (
                             <p className="text-sm text-muted-foreground text-center py-4">No hay eventos agendados.</p>
@@ -178,39 +181,45 @@ export default function FamilyPage() {
 
 function EventDialogContent({ user, firestore, event, onFinished }: { user: any, firestore: any, event: WithId<FamilyEvent> | null, onFinished: () => void }) {
     const [activity, setActivity] = useState('');
-    const [date, setDate] = useState('');
+    const [date, setDate] = useState<Date | undefined>();
+    const [time, setTime] = useState('12:00');
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (event) {
-            setActivity(event.activity);
-            // Format for datetime-local input
             const eventDate = new Date(event.date);
-            const yyyy = eventDate.getFullYear();
-            const MM = String(eventDate.getMonth() + 1).padStart(2, '0');
-            const dd = String(eventDate.getDate()).padStart(2, '0');
-            const hh = String(eventDate.getHours()).padStart(2, '0');
-            const mm = String(eventDate.getMinutes()).padStart(2, '0');
-            setDate(`${yyyy}-${MM}-${dd}T${hh}:${mm}`);
+            setActivity(event.activity);
+            setDate(eventDate);
+            setTime(format(eventDate, 'HH:mm'));
         } else {
             setActivity('');
-            setDate('');
+            setDate(new Date());
+            setTime(format(new Date(), 'HH:mm'));
         }
     }, [event]);
 
     const handleSubmit = async () => {
-        if (!user || !activity || !date) return;
+        if (!user || !activity || !date || !time) return;
         setIsSaving(true);
+        
+        const [hours, minutes] = time.split(':').map(Number);
+        const combinedDate = setMinutes(setHours(date, hours), minutes);
+
         const eventData = {
             userId: user.uid,
             activity,
-            date,
+            date: combinedDate.toISOString(),
             createdAt: serverTimestamp()
         };
+        
+        const updateData = {
+            activity,
+            date: combinedDate.toISOString(),
+        }
 
         if (event) {
             const eventRef = doc(firestore, `users/${user.uid}/family_events/${event.id}`);
-            await updateDoc(eventRef, { activity, date });
+            await updateDoc(eventRef, updateData);
         } else {
             const eventsRef = collection(firestore, `users/${user.uid}/family_events`);
             await addDoc(eventsRef, eventData);
@@ -238,7 +247,41 @@ function EventDialogContent({ user, firestore, event, onFinished }: { user: any,
                     <Label htmlFor="date" className="text-right">
                     Fecha
                     </Label>
-                    <Input id="date" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} className="col-span-3" />
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <Button
+                            variant={"outline"}
+                            className={cn(
+                            "col-span-3 justify-start text-left font-normal",
+                            !date && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {date ? format(date, "PPP", { locale: es }) : <span>Elige una fecha</span>}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                        <Calendar
+                            mode="single"
+                            selected={date}
+                            onSelect={setDate}
+                            initialFocus
+                            locale={es}
+                        />
+                        </PopoverContent>
+                    </Popover>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="time" className="text-right">
+                        Hora
+                    </Label>
+                    <Input
+                        id="time"
+                        type="time"
+                        value={time}
+                        onChange={(e) => setTime(e.target.value)}
+                        className="col-span-3"
+                    />
                 </div>
             </div>
             <DialogFooter>
@@ -250,5 +293,3 @@ function EventDialogContent({ user, firestore, event, onFinished }: { user: any,
         </DialogContent>
     )
 }
-
-    
