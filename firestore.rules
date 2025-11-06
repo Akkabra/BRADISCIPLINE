@@ -11,6 +11,7 @@
  * - /users/{userId}: Stores user profile information.
  * - /users/{userId}/daily_routines/{routineId}: Stores daily routines for each user.
  * - /users/{userId}/journals/{journalId}: Stores journal entries for each user.
+ * - /users/{userId}/focus_routines/{focusRoutineId}: Stores daily focus objectives.
  *
  * Key Security Decisions:
  * - Users can only read and write their own user document and associated subcollections.
@@ -110,6 +111,15 @@ service cloud.firestore {
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
+    }
+    
+    /**
+     * @description Rules for the /users/{userId}/focus_routines/{focusRoutineId} collection.
+     * @path /users/{userId}/focus_routines/{focusRoutineId}
+     * @principle Enforces that users can only manage their own focus routines.
+     */
+    match /users/{userId}/focus_routines/{focusRoutineId} {
+        allow get, list, create, update, delete: if isOwner(userId);
     }
   }
 }
