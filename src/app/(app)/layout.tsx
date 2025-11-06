@@ -9,9 +9,10 @@ import {
   HeartHandshake,
   Settings,
   UserCircle,
+  LogOut,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Inicio' },
@@ -46,6 +49,17 @@ const navItems = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const auth = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === href;
@@ -149,13 +163,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Link href="/settings" className="w-full">Configuración</Link>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings">Configuración</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>Soporte</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                   <DropdownMenuItem>
-                    <Link href="/" className="w-full">Cerrar Sesión</Link>
+                   <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Cerrar Sesión
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
