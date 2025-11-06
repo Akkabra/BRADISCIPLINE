@@ -20,7 +20,7 @@ const TiwazRune = (props: React.SVGProps<SVGSVGElement>) => (
 export function Logo({ className }: { className?: string }) {
   return (
     <Link
-      href="/dashboard"
+      href="/"
       className={cn(
         "flex items-center gap-2 font-headline tracking-wider text-primary",
         className

@@ -64,6 +64,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const handleSupportClick = () => {
+    window.location.href = "mailto:soporte@bradiscipline.com";
+  };
+
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === href;
     return pathname.startsWith(href);
@@ -74,7 +78,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <TooltipProvider>
         <aside className="fixed inset-y-0 left-0 z-10 hidden w-16 flex-col border-r bg-card sm:flex">
           <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
-            <Logo />
+            <Link
+              href="/"
+              className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary md:h-10 md:w-10 md:text-base"
+            >
+              <Logo className="h-6 w-6 transition-all group-hover:scale-110" />
+              <span className="sr-only">BRA DISCIPLINE</span>
+            </Link>
             {navItems.map((item) => (
               <Tooltip key={item.href}>
                 <TooltipTrigger asChild>
