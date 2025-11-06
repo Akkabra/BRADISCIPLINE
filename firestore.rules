@@ -9,11 +9,10 @@
  * All data is nested under /users/{userId}, ensuring that user data is isolated
  * and access control can be easily managed through Firestore path matching.
  * - /users/{userId}: Stores user profile information.
- * - /users/{userId}/daily_routines/{routineId}: Stores daily routines for each user.
- * - /users/{userId}/journals/{journalId}: Stores journal entries for each user.
  * - /users/{userId}/family_events/{eventId}: Stores planned family connection events.
  * - /users/{userId}/connection_tasks/{taskId}: Stores repeatable family connection tasks.
  * - /users/{userId}/goals/{goalId}: Stores user-defined goals.
+ * - /users/{userId}/focus_routines/{routineId}: Stores daily focus goals and intentions.
  *
  * Key Security Decisions:
  * - Users can only read and write their own user document and associated subcollections.
@@ -76,36 +75,6 @@ service cloud.firestore {
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
-
-    /**
-     * @description Rules for the /users/{userId}/daily_routines/{routineId} collection.
-     * @path /users/{userId}/daily_routines/{routineId}
-     * @allow (create) User 'user_abc' can create a daily routine in their own user document.
-     * @allow (get) User 'user_abc' can get a daily routine in their own user document.
-     * @allow (update) User 'user_abc' can update a daily routine in their own user document.
-     * @allow (delete) User 'user_abc' can delete a daily routine in their own user document.
-     * @deny (create) User 'user_xyz' cannot create a daily routine in user document 'user_abc'.
-     * @deny (get) User 'user_xyz' cannot get a daily routine in user document 'user_abc'.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/daily_routines/{routineId} {
-      allow get, list, create, update, delete: if isOwner(userId);
-    }
-
-    /**
-     * @description Rules for the /users/{userId}/journals/{journalId} collection.
-     * @path /users/{userId}/journals/{journalId}
-     * @allow (create) User 'user_abc' can create a journal entry in their own user document.
-     * @allow (get) User 'user_abc' can get a journal entry in their own user document.
-     * @allow (update) User 'user_abc' can update a journal entry in their own user document.
-     * @allow (delete) User 'user_abc' can delete a journal entry in their own user document.
-     * @deny (create) User 'user_xyz' cannot create a journal entry in user document 'user_abc'.
-     * @deny (get) User 'user_xyz' cannot get a journal entry in user document 'user_abc'.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/journals/{journalId} {
-      allow get, list, create, update, delete: if isOwner(userId);
-    }
     
     /**
      * @description Rules for the /users/{userId}/family_events/{eventId} subcollection.
@@ -131,6 +100,15 @@ service cloud.firestore {
      * @principle Enforces that users can only manage their own goals.
      */
     match /users/{userId}/goals/{goalId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/focus_routines/{routineId} subcollection.
+     * @path /users/{userId}/focus_routines/{routineId}
+     * @principle Enforces that users can only manage their own daily focus routines.
+     */
+    match /users/{userId}/focus_routines/{routineId} {
         allow get, list, create, update, delete: if isOwner(userId);
     }
   }
