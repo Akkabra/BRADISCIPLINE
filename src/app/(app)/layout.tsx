@@ -78,7 +78,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <TooltipProvider>
         <aside className="fixed inset-y-0 left-0 z-10 hidden w-16 flex-col border-r bg-card sm:flex">
           <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
-            <Logo className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary md:h-10 md:w-10 md:text-base" />
+            <div
+              className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary md:h-9 md:w-9 md:text-base"
+            >
+              <Logo className="transition-all group-hover:scale-110" />
+            </div>
             {navItems.map((item) => (
               <Tooltip key={item.href}>
                 <TooltipTrigger asChild>

@@ -98,38 +98,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm text-primary font-semibold">TESTIMONIOS</div>
-                <h2 className="text-3xl font-headline tracking-tighter sm:text-5xl">Lo que dicen los guerreros</h2>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Historias reales de hombres que tomaron el control.
-                </p>
-              </div>
-            </div>
-            <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:grid-cols-3 lg:gap-12">
-              <TestimonialCard
-                quote="Perdí el rumbo y esta app fue el mapa de vuelta. La estructura diaria me obligó a ser honesto conmigo mismo. En 30 días, recuperé el control."
-                name="Javier M."
-                role="Padre y Emprendedor"
-              />
-              <TestimonialCard
-                quote="La reflexión nocturna y el análisis de IA cambiaron el juego. Vi patrones en mi comportamiento que no había notado. Indispensable."
-                name="Carlos G."
-                role="Ingeniero"
-              />
-              <TestimonialCard
-                quote="Dejé de negociar conmigo mismo. 'Ducha fría' es lo primero en la lista y es innegociable. Esa pequeña victoria define todo mi día. Gracias."
-                name="David R."
-                role="Atleta amateur"
-              />
-            </div>
-          </div>
-        </section>
-
-
         <section className="w-full py-12 md:py-24 lg:py-32 bg-card border-y border-border/50">
           <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
             <div className="space-y-3">
@@ -174,27 +142,6 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
         <h3 className="text-lg font-bold font-headline text-card-foreground">{title}</h3>
       </div>
       <p className="relative text-sm text-muted-foreground">{description}</p>
-    </div>
-  );
-}
-
-function TestimonialCard({ quote, name, role }: { quote: string, name: string, role: string }) {
-  return (
-    <div className="flex flex-col justify-center space-y-4 p-6 rounded-lg border border-border/50 bg-background/50">
-       <div className="flex gap-0.5">
-          <Star className="w-5 h-5 fill-primary text-primary" />
-          <Star className="w-5 h-5 fill-primary text-primary" />
-          <Star className="w-5 h-5 fill-primary text-primary" />
-          <Star className="w-5 h-5 fill-primary text-primary" />
-          <Star className="w-5 h-5 fill-primary text-primary" />
-        </div>
-      <blockquote className="text-lg font-semibold leading-snug text-card-foreground">
-        “{quote}”
-      </blockquote>
-      <div>
-        <div className="font-semibold">{name}</div>
-        <div className="text-sm text-muted-foreground">{role}</div>
-      </div>
     </div>
   );
 }
