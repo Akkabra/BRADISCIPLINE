@@ -12,6 +12,8 @@
  * - /users/{userId}/daily_routines/{routineId}: Stores daily routines for each user.
  * - /users/{userId}/journals/{journalId}: Stores journal entries for each user.
  * - /users/{userId}/focus_routines/{focusRoutineId}: Stores daily focus objectives.
+ * - /users/{userId}/family_events/{eventId}: Stores planned family connection events.
+ * - /users/{userId}/connection_tasks/{taskId}: Stores repeatable family connection tasks.
  *
  * Key Security Decisions:
  * - Users can only read and write their own user document and associated subcollections.
@@ -87,11 +89,7 @@ service cloud.firestore {
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/daily_routines/{routineId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow get, list, create, update, delete: if isOwner(userId);
     }
 
     /**
@@ -106,11 +104,7 @@ service cloud.firestore {
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/journals/{journalId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow get, list, create, update, delete: if isOwner(userId);
     }
     
     /**
@@ -121,5 +115,25 @@ service cloud.firestore {
     match /users/{userId}/focus_routines/{focusRoutineId} {
         allow get, list, create, update, delete: if isOwner(userId);
     }
+
+    /**
+     * @description Rules for the /users/{userId}/family_events/{eventId} subcollection.
+     * @path /users/{userId}/family_events/{eventId}
+     * @principle Enforces that users can only manage their own family events.
+     */
+    match /users/{userId}/family_events/{eventId} {
+      allow get, list, create, update, delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/connection_tasks/{taskId} subcollection.
+     * @path /users/{userId}/connection_tasks/{taskId}
+     * @principle Enforces that users can only manage their own connection tasks.
+     */
+    match /users/{userId}/connection_tasks/{taskId} {
+      allow get, list, create, update, delete: if isOwner(userId);
+    }
   }
 }
+
+    

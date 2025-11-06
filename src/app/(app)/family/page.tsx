@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Check, Plus } from "lucide-react"
-import React from "react"
+import { Calendar, Check, Loader2, Plus } from "lucide-react"
+import React, { useEffect, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -15,10 +15,28 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useAuth, useCollection, useFirestore, useMemoFirebase } from "@/firebase"
+import { addDoc, collection, doc, serverTimestamp, updateDoc, query, orderBy, limit } from "firebase/firestore"
+import type { WithId } from "@/firebase"
+import { format } from "date-fns"
+import { es } from 'date-fns/locale';
 
+type ConnectionTask = {
+    title: string;
+    completed: boolean;
+    createdAt: any;
+    userId: string;
+};
 
-const connectionTasks = [
-    { title: 'Leer un libro juntos', completed: true },
+type FamilyEvent = {
+    activity: string;
+    date: string;
+    createdAt: any;
+    userId: string;
+};
+
+const initialConnectionTasks = [
+    { title: 'Leer un libro juntos', completed: false },
     { title: 'Salir al parque sin móviles', completed: false },
     { title: 'Enseñar algo nuevo (ej: una habilidad)', completed: false },
     { title: 'Cocinar juntos una comida', completed: false },
@@ -32,11 +50,57 @@ const familyTips = [
 ];
 
 export default function FamilyPage() {
-    const [tip, setTip] = React.useState('');
+    const [tip, setTip] = useState('');
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [editingEvent, setEditingEvent] = useState<WithId<FamilyEvent> | null>(null);
 
-    React.useEffect(() => {
+    const { user } = useAuth();
+    const firestore = useFirestore();
+
+    const tasksRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/connection_tasks`) : null, [firestore, user]);
+    const { data: tasks, isLoading: tasksLoading } = useCollection<ConnectionTask>(tasksRef);
+    
+    const eventsQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/family_events`), orderBy("date", "desc"), limit(1)) : null, [firestore, user]);
+    const { data: events, isLoading: eventsLoading } = useCollection<FamilyEvent>(eventsQuery);
+    
+    const latestEvent = events?.[0];
+
+    useEffect(() => {
         setTip(familyTips[Math.floor(Math.random() * familyTips.length)]);
     }, []);
+
+    useEffect(() => {
+        if (user && !tasksLoading && (!tasks || tasks.length === 0)) {
+            const batch = initialConnectionTasks.map(task => 
+                addDoc(tasksRef!, {
+                    ...task,
+                    userId: user.uid,
+                    createdAt: serverTimestamp()
+                })
+            );
+            Promise.all(batch);
+        }
+    }, [user, tasks, tasksLoading, tasksRef]);
+    
+    const handleToggleTask = async (task: WithId<ConnectionTask>) => {
+        if (!user || !task.id) return;
+        const taskRef = doc(firestore, `users/${user.uid}/connection_tasks/${task.id}`);
+        await updateDoc(taskRef, { completed: !task.completed });
+    }
+    
+    const handleOpenDialog = (event: WithId<FamilyEvent> | null = null) => {
+        setEditingEvent(event);
+        setIsDialogOpen(true);
+    };
+
+    const formatDate = (dateString: string) => {
+        if (!dateString) return "Fecha no definida";
+        try {
+          return format(new Date(dateString), "eeee, d 'de' MMMM 'a las' HH:mm", { locale: es });
+        } catch (error) {
+          return "Fecha inválida";
+        }
+    };
 
     return (
         <div className="grid gap-8">
@@ -52,41 +116,29 @@ export default function FamilyPage() {
                         <CardDescription>Planifica tiempo de calidad intencional.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                            <div>
-                                <p className="font-semibold">Noche de juegos</p>
-                                <p className="text-sm text-muted-foreground">Este viernes a las 7:00 PM</p>
+                        {eventsLoading ? <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary"/> : (
+                           latestEvent ? (
+                             <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                                <div>
+                                    <p className="font-semibold">{latestEvent.activity}</p>
+                                    <p className="text-sm text-muted-foreground">{formatDate(latestEvent.date)}</p>
+                                </div>
+                                <Button variant="outline" size="sm" onClick={() => handleOpenDialog(latestEvent)}><Calendar className="h-4 w-4 mr-2" />Reprogramar</Button>
                             </div>
-                            <Button variant="outline" size="sm"><Calendar className="h-4 w-4 mr-2" />Reprogramar</Button>
-                        </div>
-                        <Dialog>
+                           ) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">No hay eventos agendados.</p>
+                           )
+                        )}
+                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button className="w-full font-bold"><Plus className="h-4 w-4 mr-2" />Agendar Nuevo Momento</Button>
+                                <Button className="w-full font-bold" onClick={() => handleOpenDialog(null)}><Plus className="h-4 w-4 mr-2" />Agendar Nuevo Momento</Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-[425px]">
-                                <DialogHeader>
-                                <DialogTitle>Agendar Tiempo de Calidad</DialogTitle>
-                                <DialogDescription>
-                                    Crea un nuevo espacio en tu agenda para conectar.
-                                </DialogDescription>                                </DialogHeader>
-                                <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="activity" className="text-right">
-                                    Actividad
-                                    </Label>
-                                    <Input id="activity" placeholder="Ej: Construir un cohete" className="col-span-3" />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="date" className="text-right">
-                                    Fecha
-                                    </Label>
-                                    <Input id="date" type="datetime-local" className="col-span-3" />
-                                </div>
-                                </div>
-                                <DialogFooter>
-                                <Button type="submit">Agendar</Button>
-                                </DialogFooter>
-                            </DialogContent>
+                            <EventDialogContent 
+                                user={user}
+                                firestore={firestore}
+                                event={editingEvent}
+                                onFinished={() => setIsDialogOpen(false)}
+                            />
                         </Dialog>
                     </CardContent>
                 </Card>
@@ -107,18 +159,96 @@ export default function FamilyPage() {
                     <CardDescription>Pequeñas acciones que construyen grandes vínculos.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="space-y-3">
-                        {connectionTasks.map((task, index) => (
-                            <div key={index} className={`flex items-center p-3 rounded-md transition-colors ${task.completed ? 'bg-muted' : 'bg-card hover:bg-muted/50'}`}>
-                                <Check className={`h-5 w-5 mr-3 shrink-0 ${task.completed ? 'text-[hsl(var(--chart-2))]' : 'text-muted-foreground'}`} />
-                                <span className={`${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{task.title}</span>
-                                {!task.completed && <Button variant="ghost" size="sm" className="ml-auto">Completar</Button>}
-                            </div>
-                        ))}
-                    </div>
+                    {tasksLoading ? <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /> : (
+                        <div className="space-y-3">
+                            {tasks?.sort((a,b) => a.title.localeCompare(b.title)).map((task) => (
+                                <div key={task.id} className={`flex items-center p-3 rounded-md transition-colors ${task.completed ? 'bg-muted' : 'bg-card hover:bg-muted/50'}`}>
+                                    <Check className={`h-5 w-5 mr-3 shrink-0 ${task.completed ? 'text-[hsl(var(--chart-2))]' : 'text-muted-foreground'}`} />
+                                    <span className={`${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{task.title}</span>
+                                    {!task.completed && <Button variant="ghost" size="sm" className="ml-auto" onClick={() => handleToggleTask(task)}>Completar</Button>}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
-
         </div>
     )
 }
+
+function EventDialogContent({ user, firestore, event, onFinished }: { user: any, firestore: any, event: WithId<FamilyEvent> | null, onFinished: () => void }) {
+    const [activity, setActivity] = useState('');
+    const [date, setDate] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (event) {
+            setActivity(event.activity);
+            // Format for datetime-local input
+            const eventDate = new Date(event.date);
+            const yyyy = eventDate.getFullYear();
+            const MM = String(eventDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(eventDate.getDate()).padStart(2, '0');
+            const hh = String(eventDate.getHours()).padStart(2, '0');
+            const mm = String(eventDate.getMinutes()).padStart(2, '0');
+            setDate(`${yyyy}-${MM}-${dd}T${hh}:${mm}`);
+        } else {
+            setActivity('');
+            setDate('');
+        }
+    }, [event]);
+
+    const handleSubmit = async () => {
+        if (!user || !activity || !date) return;
+        setIsSaving(true);
+        const eventData = {
+            userId: user.uid,
+            activity,
+            date,
+            createdAt: serverTimestamp()
+        };
+
+        if (event) {
+            const eventRef = doc(firestore, `users/${user.uid}/family_events/${event.id}`);
+            await updateDoc(eventRef, { activity, date });
+        } else {
+            const eventsRef = collection(firestore, `users/${user.uid}/family_events`);
+            await addDoc(eventsRef, eventData);
+        }
+        setIsSaving(false);
+        onFinished();
+    };
+
+    return (
+         <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+                <DialogTitle>{event ? "Reprogramar Momento" : "Agendar Tiempo de Calidad"}</DialogTitle>
+                <DialogDescription>
+                    {event ? "Ajusta los detalles de vuestro momento de conexión." : "Crea un nuevo espacio en tu agenda para conectar."}
+                </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="activity" className="text-right">
+                    Actividad
+                    </Label>
+                    <Input id="activity" value={activity} onChange={(e) => setActivity(e.target.value)} placeholder="Ej: Construir un cohete" className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="date" className="text-right">
+                    Fecha
+                    </Label>
+                    <Input id="date" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} className="col-span-3" />
+                </div>
+            </div>
+            <DialogFooter>
+                <Button type="submit" onClick={handleSubmit} disabled={isSaving}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {event ? "Guardar Cambios" : "Agendar"}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    )
+}
+
+    
