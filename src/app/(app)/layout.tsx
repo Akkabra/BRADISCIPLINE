@@ -11,6 +11,7 @@ import {
   UserCircle,
   LogOut,
   Flag,
+  LifeBuoy,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -166,11 +167,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/settings">Configuración</Link>
+                    <Link href="/settings">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Configuración
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => window.location.href = 'mailto:soporte@bradiscipline.com'} className="cursor-pointer">Soporte</DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/support">
+                      <LifeBuoy className="mr-2 h-4 w-4" />
+                      Soporte
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                   <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                   <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
                     <LogOut className="mr-2 h-4 w-4" />
                     Cerrar Sesión
                   </DropdownMenuItem>
