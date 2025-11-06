@@ -69,6 +69,21 @@
           "type": "boolean",
           "description": "Whether the third objective has been completed."
         },
+        "difficulty1": {
+          "type": "string",
+          "description": "Difficulty of the first objective.",
+          "enum": ["easy", "medium", "hard"]
+        },
+        "difficulty2": {
+          "type": "string",
+          "description": "Difficulty of the second objective.",
+          "enum": ["easy", "medium", "hard"]
+        },
+        "difficulty3": {
+          "type": "string",
+          "description": "Difficulty of the third objective.",
+          "enum": ["easy", "medium", "hard"]
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time",
@@ -84,6 +99,9 @@
         "completed1",
         "completed2",
         "completed3",
+        "difficulty1",
+        "difficulty2",
+        "difficulty3",
         "createdAt"
       ]
     },
