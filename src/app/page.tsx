@@ -10,19 +10,19 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="px-4 lg:px-6 h-16 flex items-center border-b border-border/50 sticky top-0 bg-background/95 backdrop-blur-sm z-10">
         <Logo />
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Button asChild variant="ghost">
+        <nav className="ml-auto flex gap-2 sm:gap-4">
+          <Button asChild variant="ghost" size="sm">
             <Link href="/login">
               Iniciar Sesión
             </Link>
           </Button>
-          <Button asChild variant="default">
-            <Link href="/login">Empezar Ahora</Link>
+          <Button asChild variant="default" size="sm">
+            <Link href="/login">Empezar</Link>
           </Button>
         </nav>
       </header>
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 relative">
+        <section className="w-full pt-12 pb-16 md:py-24 lg:py-32 xl:py-48 relative">
            <Image
             src="https://picsum.photos/seed/bra-discipline-hero/1920/1080"
             alt="Hero"
@@ -31,24 +31,22 @@ export default function LandingPage() {
             data-ai-hint="man silhouette gym"
             priority
           />
-          <div className="container px-4 md:px-6 relative">
-            <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
-              <div className="flex flex-col justify-center space-y-4">
-                <div className="space-y-2">
-                  <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl xl:text-6xl/none text-primary">
-                    FORJA TU DISCIPLINA. RECONSTRUYE TU VIDA.
-                  </h1>
-                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    BRA DISCIPLINE es tu gimnasio mental y espiritual. Una herramienta para hombres decididos a tomar el control a través de la constancia, el enfoque y un propósito claro.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button asChild size="lg">
-                    <Link href="/login">
-                      EMPIEZA TU TRANSFORMACIÓN
-                    </Link>
-                  </Button>
-                </div>
+          <div className="container px-4 md:px-6 relative text-center">
+            <div className="flex flex-col justify-center space-y-4 max-w-2xl mx-auto">
+              <div className="space-y-2">
+                <h1 className="text-4xl font-headline tracking-tighter sm:text-5xl xl:text-6xl/none text-primary">
+                  FORJA TU DISCIPLINA. RECONSTRUYE TU VIDA.
+                </h1>
+                <p className="max-w-[600px] text-muted-foreground md:text-xl mx-auto">
+                  BRA DISCIPLINE es tu gimnasio mental y espiritual. Una herramienta para hombres decididos a tomar el control a través de la constancia, el enfoque y un propósito claro.
+                </p>
+              </div>
+              <div className="flex w-full max-w-sm mx-auto">
+                <Button asChild size="lg" className="w-full">
+                  <Link href="/login">
+                    EMPIEZA TU TRANSFORMACIÓN
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>

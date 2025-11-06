@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth, useCollection, useFirestore, useMemoFirebase, type WithId } from "@/firebase";
 import { cn } from "@/lib/utils";
-import { addDoc, collection, doc, orderBy, query, serverTimestamp, updateDoc } from "firebase/firestore";
+import { addDoc, collection, doc, orderBy, query, serverTimestamp, updateDoc, deleteDoc } from "firebase/firestore";
 import { add, differenceInDays, format, isPast, isToday, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar as CalendarIcon, Flag, Loader2, Plus, Trash2 } from "lucide-react";
@@ -51,21 +51,23 @@ export default function GoalsPage() {
 
     const handleDelete = async (goalId: string) => {
         if (!user) return;
-        const goalRef = doc(firestore, `users/${user.uid}/goals/${goalId}`);
-        await updateDoc(goalRef, { deleted: true }); // Soft delete
+        if (confirm("¿Estás seguro de que quieres eliminar esta meta? Esta acción no se puede deshacer.")) {
+            const goalRef = doc(firestore, `users/${user.uid}/goals/${goalId}`);
+            await deleteDoc(goalRef);
+        }
     };
 
 
     return (
         <div className="grid gap-8">
-            <div className="flex justify-between items-center">
-                <div className="text-left">
-                    <h1 className="text-4xl font-headline tracking-tight text-primary">METAS</h1>
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="text-center sm:text-left">
+                    <h1 className="text-3xl md:text-4xl font-headline tracking-tight text-primary">METAS</h1>
                     <p className="text-muted-foreground mt-2">Define tu norte. Conquista tus ambiciones.</p>
                 </div>
                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button className="font-bold" onClick={() => handleOpenDialog(null)}>
+                        <Button className="font-bold w-full sm:w-auto" onClick={() => handleOpenDialog(null)}>
                             <Plus className="mr-2 h-4 w-4" /> Nueva Meta
                         </Button>
                     </DialogTrigger>
@@ -80,7 +82,7 @@ export default function GoalsPage() {
 
             {isLoading && <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />}
 
-            {!isLoading && activeGoals.length === 0 && (
+            {!isLoading && activeGoals.length === 0 && completedGoals.length === 0 && (
                  <Card className="text-center py-12">
                     <CardHeader>
                         <Flag className="h-12 w-12 mx-auto text-muted-foreground" />
@@ -94,19 +96,22 @@ export default function GoalsPage() {
             )}
 
             {!isLoading && activeGoals.length > 0 && (
-                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {activeGoals.map(goal => (
-                        <GoalCard key={goal.id} goal={goal} onEdit={handleOpenDialog} onToggleComplete={handleToggleComplete} />
-                    ))}
+                 <div>
+                    <h2 className="text-2xl font-headline text-primary mb-4">Metas Activas</h2>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {activeGoals.map(goal => (
+                            <GoalCard key={goal.id} goal={goal} onEdit={handleOpenDialog} onToggleComplete={handleToggleComplete} onDelete={handleDelete} />
+                        ))}
+                    </div>
                 </div>
             )}
             
             {!isLoading && completedGoals.length > 0 && (
                 <div>
-                    <h2 className="text-2xl font-headline text-primary mb-4">Metas Conquistadas</h2>
+                    <h2 className="text-2xl font-headline text-primary mb-4 mt-8">Metas Conquistadas</h2>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {completedGoals.map(goal => (
-                           <GoalCard key={goal.id} goal={goal} onEdit={handleOpenDialog} onToggleComplete={handleToggleComplete} />
+                           <GoalCard key={goal.id} goal={goal} onEdit={handleOpenDialog} onToggleComplete={handleToggleComplete} onDelete={handleDelete}/>
                         ))}
                     </div>
                 </div>
@@ -115,7 +120,7 @@ export default function GoalsPage() {
     );
 }
 
-function GoalCard({ goal, onEdit, onToggleComplete }: { goal: WithId<Goal>, onEdit: (goal: WithId<Goal>) => void, onToggleComplete: (goal: WithId<Goal>) => void }) {
+function GoalCard({ goal, onEdit, onToggleComplete, onDelete }: { goal: WithId<Goal>, onEdit: (goal: WithId<Goal>) => void, onToggleComplete: (goal: WithId<Goal>) => void, onDelete: (goalId: string) => void }) {
     const dueDate = new Date(goal.dueDate);
     const today = startOfDay(new Date());
     const daysRemaining = differenceInDays(dueDate, today);
@@ -143,21 +148,23 @@ function GoalCard({ goal, onEdit, onToggleComplete }: { goal: WithId<Goal>, onEd
         <Card className={cn("flex flex-col", goal.completed && "opacity-60")}>
             <CardHeader>
                 <div className="flex justify-between items-start">
-                    <CardTitle className={cn("text-xl", goal.completed && "line-through")}>{goal.title}</CardTitle>
-                    <div className="flex items-center gap-2">
-                        <Checkbox checked={goal.completed} onClick={() => onToggleComplete(goal)} className="h-6 w-6" />
-                    </div>
+                    <CardTitle className={cn("text-xl pr-2", goal.completed && "line-through")}>{goal.title}</CardTitle>
+                    <Checkbox checked={goal.completed} onClick={() => onToggleComplete(goal)} className="h-6 w-6" />
                 </div>
-                 <div className={cn("text-xs font-semibold py-1 px-2 rounded-full inline-block text-center", urgencyColor, !urgencyColor && "text-muted-foreground")}>
+                 <div className={cn("text-xs font-semibold py-1 px-2 rounded-full inline-block text-center w-fit", urgencyColor, !urgencyColor && "text-muted-foreground")}>
                     {urgencyText}
                 </div>
             </CardHeader>
             <CardContent className="flex-grow">
                 <p className="text-sm text-muted-foreground">{goal.description}</p>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex gap-2">
                  <Button variant="outline" size="sm" className="w-full" onClick={() => onEdit(goal)} disabled={goal.completed}>
-                    Editar Meta
+                    Editar
+                </Button>
+                <Button variant="destructive" size="icon" onClick={() => onDelete(goal.id)}>
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Eliminar</span>
                 </Button>
             </CardFooter>
         </Card>
@@ -209,7 +216,7 @@ function GoalDialogContent({ user, firestore, goal, onFinished }: { user: any, f
     };
 
     return (
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-md">
             <DialogHeader>
                 <DialogTitle>{goal ? "Editar Meta" : "Nueva Meta"}</DialogTitle>
                 <DialogDescription>
@@ -217,22 +224,23 @@ function GoalDialogContent({ user, firestore, goal, onFinished }: { user: any, f
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="title" className="text-right">Título</Label>
-                    <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="col-span-3" placeholder="Ej: Correr 5km" />
+                <div className="space-y-2">
+                    <Label htmlFor="title">Título</Label>
+                    <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej: Correr 5km" />
                 </div>
-                <div className="grid grid-cols-4 items-start gap-4">
-                    <Label htmlFor="description" className="text-right pt-2">Descripción</Label>
-                    <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" placeholder="Ej: Entrenar 3 veces por semana..." />
+                <div className="space-y-2">
+                    <Label htmlFor="description">Descripción</Label>
+                    <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ej: Entrenar 3 veces por semana..." />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="dueDate" className="text-right">Fecha Límite</Label>
+                <div className="space-y-2">
+                    <Label htmlFor="dueDate">Fecha Límite</Label>
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button
+                                id="dueDate"
                                 variant={"outline"}
                                 className={cn(
-                                "col-span-3 justify-start text-left font-normal",
+                                "w-full justify-start text-left font-normal",
                                 !dueDate && "text-muted-foreground"
                                 )}
                             >

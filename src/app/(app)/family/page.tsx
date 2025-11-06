@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth, useCollection, useFirestore, useMemoFirebase } from "@/firebase"
-import { addDoc, collection, doc, serverTimestamp, updateDoc, query, orderBy, limit } from "firebase/firestore"
+import { addDoc, collection, doc, serverTimestamp, updateDoc, query, orderBy, limit, deleteDoc } from "firebase/firestore"
 import type { WithId } from "@/firebase"
 import { format, setHours, setMinutes } from "date-fns"
 import { es } from 'date-fns/locale';
@@ -108,7 +108,7 @@ export default function FamilyPage() {
     return (
         <div className="grid gap-8">
              <div className="text-center">
-                <h1 className="text-4xl font-headline tracking-tight text-primary">ESPACIO PADRE-HIJO</h1>
+                <h1 className="text-3xl md:text-4xl font-headline tracking-tight text-primary">ESPACIO PADRE-HIJO</h1>
                 <p className="text-muted-foreground mt-2">Lidera tu familia con propósito y presencia.</p>
             </div>
             
@@ -121,12 +121,12 @@ export default function FamilyPage() {
                     <CardContent className="space-y-4">
                         {eventsLoading ? <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary"/> : (
                            latestEvent ? (
-                             <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-muted rounded-lg gap-4">
                                 <div>
                                     <p className="font-semibold">{latestEvent.activity}</p>
                                     <p className="text-sm text-muted-foreground">{formatDate(latestEvent.date)}</p>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => handleOpenDialog(latestEvent)}><CalendarIcon className="h-4 w-4 mr-2" />Reprogramar</Button>
+                                <Button variant="outline" size="sm" onClick={() => handleOpenDialog(latestEvent)} className="w-full sm:w-auto"><CalendarIcon className="h-4 w-4 mr-2" />Reprogramar</Button>
                             </div>
                            ) : (
                             <p className="text-sm text-muted-foreground text-center py-4">No hay eventos agendados.</p>
@@ -166,9 +166,11 @@ export default function FamilyPage() {
                         <div className="space-y-3">
                             {tasks?.sort((a,b) => a.title.localeCompare(b.title)).map((task) => (
                                 <div key={task.id} className={`flex items-center p-3 rounded-md transition-colors ${task.completed ? 'bg-muted' : 'bg-card hover:bg-muted/50'}`}>
-                                    <Check className={`h-5 w-5 mr-3 shrink-0 ${task.completed ? 'text-[hsl(var(--chart-2))]' : 'text-muted-foreground'}`} />
-                                    <span className={`${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{task.title}</span>
-                                    {!task.completed && <Button variant="ghost" size="sm" className="ml-auto" onClick={() => handleToggleTask(task)}>Completar</Button>}
+                                    <button onClick={() => handleToggleTask(task)} className="flex items-center flex-1 text-left">
+                                        <Check className={`h-5 w-5 mr-3 shrink-0 ${task.completed ? 'text-[hsl(var(--chart-2))]' : 'text-muted-foreground'}`} />
+                                        <span className={`flex-1 ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{task.title}</span>
+                                    </button>
+                                    {!task.completed && <Button variant="ghost" size="sm" className="ml-auto hidden sm:inline-flex" onClick={() => handleToggleTask(task)}>Completar</Button>}
                                 </div>
                             ))}
                         </div>
@@ -229,7 +231,7 @@ function EventDialogContent({ user, firestore, event, onFinished }: { user: any,
     };
 
     return (
-         <DialogContent className="sm:max-w-[425px]">
+         <DialogContent className="sm:max-w-md">
             <DialogHeader>
                 <DialogTitle>{event ? "Reprogramar Momento" : "Agendar Tiempo de Calidad"}</DialogTitle>
                 <DialogDescription>
@@ -237,22 +239,23 @@ function EventDialogContent({ user, firestore, event, onFinished }: { user: any,
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="activity" className="text-right">
+                <div className="space-y-2">
+                    <Label htmlFor="activity">
                     Actividad
                     </Label>
-                    <Input id="activity" value={activity} onChange={(e) => setActivity(e.target.value)} placeholder="Ej: Construir un cohete" className="col-span-3" />
+                    <Input id="activity" value={activity} onChange={(e) => setActivity(e.target.value)} placeholder="Ej: Construir un cohete" />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="date" className="text-right">
+                <div className="space-y-2">
+                    <Label htmlFor="date">
                     Fecha
                     </Label>
                     <Popover>
                         <PopoverTrigger asChild>
                         <Button
+                            id="date"
                             variant={"outline"}
                             className={cn(
-                            "col-span-3 justify-start text-left font-normal",
+                            "w-full justify-start text-left font-normal",
                             !date && "text-muted-foreground"
                             )}
                         >
@@ -271,8 +274,8 @@ function EventDialogContent({ user, firestore, event, onFinished }: { user: any,
                         </PopoverContent>
                     </Popover>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="time" className="text-right">
+                <div className="space-y-2">
+                    <Label htmlFor="time">
                         Hora
                     </Label>
                     <Input
@@ -280,7 +283,6 @@ function EventDialogContent({ user, firestore, event, onFinished }: { user: any,
                         type="time"
                         value={time}
                         onChange={(e) => setTime(e.target.value)}
-                        className="col-span-3"
                     />
                 </div>
             </div>

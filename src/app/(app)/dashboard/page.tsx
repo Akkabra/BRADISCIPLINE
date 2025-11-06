@@ -51,8 +51,8 @@ export default function DashboardPage() {
 
   return (
     <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-        <Card>
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+        <Card className="sm:col-span-2 md:col-span-1">
           <CardHeader className="pb-2">
             <CardDescription className="font-headline text-lg">BIENVENIDO, GUERRERO</CardDescription>
             <CardTitle className="text-4xl text-primary">Día 12</CardTitle>
@@ -61,7 +61,7 @@ export default function DashboardPage() {
             <div className="text-xs text-muted-foreground">de tu racha de disciplina.</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="sm:col-span-2 md:col-span-1">
           <CardHeader className="pb-2">
             <CardDescription>Progreso del Día</CardDescription>
             <CardTitle className="text-4xl text-primary">75%</CardTitle>
@@ -70,7 +70,7 @@ export default function DashboardPage() {
             <div className="text-xs text-muted-foreground">4 de 5 tareas completadas hoy.</div>
           </CardContent>
         </Card>
-        <Card className="sm:col-span-2">
+        <Card className="sm:col-span-2 md:col-span-2">
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
@@ -102,7 +102,7 @@ export default function DashboardPage() {
                   cursor={false}
                   content={<ChartTooltipContent indicator="line" />}
                 />
-                <PolarAngleAxis dataKey="area" stroke="hsl(var(--foreground))" />
+                <PolarAngleAxis dataKey="area" stroke="hsl(var(--foreground))" tick={{ fontSize: 12 }} />
                 <PolarGrid />
                 <Radar
                   dataKey="discipline"

@@ -43,7 +43,7 @@ export default function ProgressPage() {
   return (
     <div className="grid gap-8">
       <div className="text-center">
-        <h1 className="text-4xl font-headline tracking-tight text-primary">TU PROGRESO</h1>
+        <h1 className="text-3xl md:text-4xl font-headline tracking-tight text-primary">TU PROGRESO</h1>
         <p className="text-muted-foreground mt-2">Los números no mienten. Mide tu crecimiento.</p>
       </div>
 
@@ -53,8 +53,8 @@ export default function ProgressPage() {
           <CardDescription>Tu puntaje de cumplimiento promedio cada mes.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig} className="h-[300px] w-full">
-            <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+          <ChartContainer config={chartConfig} className="h-[250px] sm:h-[300px] w-full">
+            <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 0, bottom: 0, left: -20 }}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)"/>
               <XAxis
                 dataKey="month"
@@ -80,12 +80,12 @@ export default function ProgressPage() {
           <CardTitle>Logros Desbloqueados</CardTitle>
           <CardDescription>Tus medallas de honor en el camino de la disciplina.</CardDescription>
         </CardHeader>
-        <CardContent className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <CardContent className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {achievements.map((ach, index) => (
-                <div key={index} className="flex flex-col items-center text-center p-6 border rounded-lg bg-card/50 hover:border-primary/50 transition-colors">
-                    <div className="p-4 bg-muted rounded-full mb-3">{ach.icon}</div>
-                    <p className="font-semibold font-headline text-lg">{ach.title}</p>
-                    <p className="text-sm text-muted-foreground mt-1">{ach.description}</p>
+                <div key={index} className="flex flex-col items-center text-center p-4 sm:p-6 border rounded-lg bg-card/50 hover:border-primary/50 transition-colors">
+                    <div className="p-3 sm:p-4 bg-muted rounded-full mb-3">{ach.icon}</div>
+                    <p className="font-semibold font-headline text-base sm:text-lg">{ach.title}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">{ach.description}</p>
                 </div>
             ))}
         </CardContent>
