@@ -43,13 +43,13 @@ type FocusRoutine = {
     createdAt: any;
 };
 
-function FocusRoutineCard({ onProgressChange }: { onProgressChange: (progress: { completed: number, total: number }) => void }) {
+function FocusRoutineCard({ onProgressChange, setCompletedObjectivesCount }: { onProgressChange: (progress: { completed: number, total: number }) => void, setCompletedObjectivesCount: (count: number) => void }) {
     const [routine, setRoutine] = useState<FocusRoutine | null>(null);
     const [loading, setLoading] = useState(true);
     
     const { user } = useAuth();
     const firestore = useFirestore();
-    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const todayStr = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
     const focusRoutinesCol = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/focus_routines`) : null, [firestore, user]);
 
     useEffect(() => {
@@ -64,8 +64,9 @@ function FocusRoutineCard({ onProgressChange }: { onProgressChange: (progress: {
                 const doc = snapshot.docs[0];
                 const data = doc.data() as FocusRoutine;
                 setRoutine({ ...data, id: doc.id });
+                setLoading(false);
             } else {
-                const newRoutine: Omit<FocusRoutine, 'id'> = {
+                const newRoutineData: Omit<FocusRoutine, 'id'> = {
                     userId: user.uid,
                     date: todayStr,
                     objective1: '',
@@ -80,13 +81,15 @@ function FocusRoutineCard({ onProgressChange }: { onProgressChange: (progress: {
                     createdAt: serverTimestamp(),
                 };
                 try {
-                    const docRef = await addDoc(focusRoutinesCol, newRoutine);
-                    setRoutine({ ...newRoutine, id: docRef.id });
+                    // Create the doc, then set the state with the new doc's ID
+                    const docRef = await addDoc(focusRoutinesCol, newRoutineData);
+                    setRoutine({ ...newRoutineData, id: docRef.id });
                 } catch (error) {
                     console.error("Error creating new routine:", error);
+                } finally {
+                    setLoading(false);
                 }
             }
-            setLoading(false);
         };
     
         fetchOrCreateRoutine();
@@ -102,8 +105,11 @@ function FocusRoutineCard({ onProgressChange }: { onProgressChange: (progress: {
                           difficultyPoints[routine.difficulty2] +
                           difficultyPoints[routine.difficulty3];
             onProgressChange({ completed, total });
+
+            const completedCount = (routine.completed1 ? 1 : 0) + (routine.completed2 ? 1 : 0) + (routine.completed3 ? 1 : 0);
+            setCompletedObjectivesCount(completedCount);
         }
-    }, [routine, onProgressChange]);
+    }, [routine, onProgressChange, setCompletedObjectivesCount]);
 
 
     const updateRoutine = (field: keyof FocusRoutine, value: any) => {
@@ -135,8 +141,8 @@ function FocusRoutineCard({ onProgressChange }: { onProgressChange: (progress: {
                 <CardDescription>Planifica tus 3 objetivos principales del día y su dificultad.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                {[0, 1, 2].map(index => {
-                    const i = (index + 1) as 1 | 2 | 3;
+                {[1, 2, 3].map(index => {
+                    const i = index as 1 | 2 | 3;
                     const objective = routine[`objective${i}`];
                     const completed = routine[`completed${i}`];
                     const difficulty = routine[`difficulty${i}`];
@@ -182,6 +188,7 @@ function FocusRoutineCard({ onProgressChange }: { onProgressChange: (progress: {
 export default function RoutinePage() {
     const [completedTasks, setCompletedTasks] = useState<string[]>([]);
     const [focusProgress, setFocusProgress] = useState({ completed: 0, total: 0 });
+    const [completedObjectivesCount, setCompletedObjectivesCount] = useState(0);
 
     const handleTaskToggle = (taskId: string) => {
         setCompletedTasks(prev => 
@@ -202,12 +209,8 @@ export default function RoutinePage() {
     const totalPossiblePoints = totalStandardPoints + focusProgress.total;
     const progress = totalPossiblePoints > 0 ? (totalCompletedPoints / totalPossiblePoints) * 100 : 0;
     
-    const completedCount = completedTasks.length + (focusProgress.completed > 0 ? Array(3).fill(0).filter((_, i) => routine && routine[`completed${i+1}`]).length : 0);
+    const completedCount = completedTasks.length + completedObjectivesCount;
     const totalCount = dailyTasks.length + 3;
-    
-    const routine = null; // a placeholder since we can't access routine from child. This logic is faulty.
-                           // The number of completed items will be based on completedTasks length and a count of completed objectives.
-                           // This needs to be reworked if we want to display "X of Y tasks". Let's stick to points.
     
     return (
         <div className="container mx-auto py-8 max-w-3xl">
@@ -222,12 +225,15 @@ export default function RoutinePage() {
                 </CardHeader>
                 <CardContent>
                     <Progress value={progress} className="h-3" />
-                    <p className="text-sm text-muted-foreground mt-2">{totalCompletedPoints} de {totalPossiblePoints} puntos obtenidos.</p>
+                    <p className="text-sm text-muted-foreground mt-2">{totalCompletedPoints} de {totalPossiblePoints > 0 ? totalPossiblePoints : '...'} puntos obtenidos. {completedCount}/{totalCount} tareas completadas.</p>
                 </CardContent>
             </Card>
 
             <div className="grid gap-4">
-                <FocusRoutineCard onProgressChange={setFocusProgress} />
+                <FocusRoutineCard 
+                    onProgressChange={setFocusProgress} 
+                    setCompletedObjectivesCount={setCompletedObjectivesCount}
+                />
                 {dailyTasks.map(task => (
                     <TaskCard 
                         key={task.id} 
@@ -271,3 +277,5 @@ function TaskCard({ task, isCompleted, onToggle }: { task: {id: string, title: s
         </Card>
     )
 }
+
+    
