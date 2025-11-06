@@ -47,10 +47,11 @@ function FocusRoutineCard() {
 
     useEffect(() => {
         if (!focusRoutinesCol || !user) return;
-
-        const q = query(focusRoutinesCol, where("date", "==", todayStr));
-
-        getDocs(q).then(snapshot => {
+    
+        const fetchOrCreateRoutine = async () => {
+            const q = query(focusRoutinesCol, where("date", "==", todayStr));
+            const snapshot = await getDocs(q);
+    
             if (!snapshot.empty) {
                 const doc = snapshot.docs[0];
                 const data = doc.data() as FocusRoutine;
@@ -58,7 +59,7 @@ function FocusRoutineCard() {
                 setObjectives([data.objective1, data.objective2, data.objective3]);
                 setCompleted([data.completed1, data.completed2, data.completed3]);
             } else {
-                 const newRoutine: FocusRoutine = {
+                const newRoutine: FocusRoutine = {
                     userId: user.uid,
                     date: todayStr,
                     objective1: '',
@@ -69,13 +70,16 @@ function FocusRoutineCard() {
                     completed3: false,
                     createdAt: serverTimestamp(),
                 };
-                addDoc(focusRoutinesCol, newRoutine).then(docRef => {
-                    setRoutine({...newRoutine, id: docRef.id});
-                });
+                const docRef = await addDoc(focusRoutinesCol, newRoutine);
+                setRoutine({...newRoutine, id: docRef.id});
+                setObjectives(['', '', '']);
+                setCompleted([false, false, false]);
             }
             setLoading(false);
-        });
-
+        };
+    
+        fetchOrCreateRoutine();
+    
     }, [focusRoutinesCol, todayStr, user]);
 
     const handleObjectiveChange = (index: number, value: string) => {
@@ -85,8 +89,8 @@ function FocusRoutineCard() {
     };
 
     const handleSaveObjective = (index: number) => {
-        if (routine?.id) {
-            const routineRef = doc(firestore, `users/${user!.uid}/focus_routines/${routine.id}`);
+        if (routine?.id && user) {
+            const routineRef = doc(firestore, `users/${user.uid}/focus_routines/${routine.id}`);
             updateDoc(routineRef, {
                 [`objective${index + 1}`]: objectives[index]
             });
@@ -94,12 +98,12 @@ function FocusRoutineCard() {
     };
     
     const handleCompletionChange = (index: number) => {
-        if (routine?.id) {
+        if (routine?.id && user) {
             const newCompleted = [...completed];
             newCompleted[index] = !newCompleted[index];
             setCompleted(newCompleted);
 
-            const routineRef = doc(firestore, `users/${user!.uid}/focus_routines/${routine.id}`);
+            const routineRef = doc(firestore, `users/${user.uid}/focus_routines/${routine.id}`);
             updateDoc(routineRef, {
                 [`completed${index + 1}`]: newCompleted[index]
             });
