@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "User": {
@@ -16,13 +15,14 @@
           "description": "Email address of the user.",
           "format": "email"
         },
-        "firstName": {
+        "displayName": {
           "type": "string",
-          "description": "First name of the user."
+          "description": "The user's display name, typically from a social provider like Google."
         },
-        "lastName": {
+        "photoURL": {
           "type": "string",
-          "description": "Last name of the user."
+          "description": "The URL of the user's profile picture, typically from a social provider.",
+          "format": "uri"
         }
       },
       "required": [
