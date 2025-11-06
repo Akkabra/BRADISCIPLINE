@@ -1,14 +1,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Award, CheckCircle2, Loader2, BookOpen, Ban, Sparkles } from 'lucide-react';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useAuth, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { WithId } from '@/firebase';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -52,51 +52,48 @@ export default function RoutinePage() {
 
     const todayString = useMemo(() => new Date().toISOString().split('T')[0], []);
 
-    const routinesCollectionRef = useMemoFirebase(
-        () => (user ? collection(firestore, `users/${user.uid}/focus_routines`) : null),
-        [user, firestore]
-    );
-
-    const getOrCreateRoutine = useCallback(async () => {
-        if (!user || !routinesCollectionRef) return;
-
-        setIsLoading(true);
-        const q = query(routinesCollectionRef, where('date', '==', todayString));
-        
-        try {
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-                const docData = querySnapshot.docs[0];
-                setRoutine({ id: docData.id, ...docData.data() } as WithId<FocusRoutine>);
-            } else {
-                const newRoutineData: FocusRoutine = {
-                    userId: user.uid,
-                    date: todayString,
-                    goals: [
-                        { text: '', completed: false, difficulty: 10 },
-                        { text: '', completed: false, difficulty: 10 },
-                        { text: '', completed: false, difficulty: 10 },
-                    ],
-                    do: '',
-                    dont: '',
-                    motivation: '',
-                };
-                const newDocRef = doc(routinesCollectionRef);
-                await setDoc(newDocRef, newRoutineData);
-                setRoutine({ id: newDocRef.id, ...newRoutineData });
-            }
-        } catch (error) {
-            console.error("Error getting or creating routine:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [user, todayString, routinesCollectionRef]);
-
     useEffect(() => {
-        if(user && firestore) {
-            getOrCreateRoutine();
-        }
-    }, [user, firestore, getOrCreateRoutine]);
+        const getOrCreateRoutine = async () => {
+            if (!user || !firestore) {
+                setIsLoading(false);
+                return;
+            };
+
+            setIsLoading(true);
+            const routinesCollectionRef = collection(firestore, `users/${user.uid}/focus_routines`);
+            const q = query(routinesCollectionRef, where('date', '==', todayString));
+            
+            try {
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const docData = querySnapshot.docs[0];
+                    setRoutine({ id: docData.id, ...docData.data() } as WithId<FocusRoutine>);
+                } else {
+                    const newRoutineData: FocusRoutine = {
+                        userId: user.uid,
+                        date: todayString,
+                        goals: [
+                            { text: '', completed: false, difficulty: 10 },
+                            { text: '', completed: false, difficulty: 10 },
+                            { text: '', completed: false, difficulty: 10 },
+                        ],
+                        do: '',
+                        dont: '',
+                        motivation: '',
+                    };
+                    const newDocRef = doc(routinesCollectionRef);
+                    await setDoc(newDocRef, newRoutineData);
+                    setRoutine({ id: newDocRef.id, ...newRoutineData });
+                }
+            } catch (error) {
+                console.error("Error getting or creating routine:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        
+        getOrCreateRoutine();
+    }, [user, firestore, todayString]);
 
     const handleTaskToggle = (taskId: string) => {
         setCompletedTasks(prev => 
@@ -119,14 +116,14 @@ export default function RoutinePage() {
 
     const totalPossiblePoints = useMemo(() => {
         const tasksPoints = dailyTasks.reduce((acc, task) => acc + task.points, 0);
-        const goalsPoints = routine?.goals.reduce((acc, goal) => acc + goal.difficulty, 0) || 30;
+        const goalsPoints = routine?.goals.reduce((acc, goal) => acc + (goal.text ? goal.difficulty : 0), 0) || 0;
         return tasksPoints + goalsPoints;
     }, [routine]);
-
+    
     const progress = totalPossiblePoints > 0 ? (totalCompletedPoints / totalPossiblePoints) * 100 : 0;
     
     const completedCount = completedTasks.length + (routine?.goals.filter(g => g.completed).length || 0);
-    const totalCount = dailyTasks.length + (routine?.goals.length || 0);
+    const totalCount = dailyTasks.length + (routine?.goals.filter(g => !!g.text).length || 0);
     
     return (
         <div className="container mx-auto py-8 max-w-4xl">
@@ -153,7 +150,7 @@ export default function RoutinePage() {
                                 <CardTitle>Rutina de Enfoque</CardTitle>
                                 <CardDescription>Define tus 3 objetivos principales del día.</CardDescription>
                             </CardHeader>
-                            <CardContent className="flex items-center justify-center h-32">
+                            <CardContent className="flex items-center justify-center h-48">
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             </CardContent>
                         </Card>
@@ -176,6 +173,7 @@ export default function RoutinePage() {
                          <Card>
                              <CardHeader>
                                  <CardTitle>Plan del Día</CardTitle>
+                                  <CardDescription>Establece tus intenciones para maximizar tu enfoque.</CardDescription>
                              </CardHeader>
                              <CardContent className="flex items-center justify-center h-64">
                                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -231,10 +229,10 @@ function FocusRoutineAccordion({ routine, setRoutine }: { routine: WithId<FocusR
         if (!routine) return;
 
         const updatedGoals = [...routine.goals];
+        // This is a safe cast because we control the types being passed
         (updatedGoals[index] as any)[field] = value;
 
-        const updatedRoutine = { ...routine, goals: updatedGoals };
-        setRoutine(updatedRoutine);
+        setRoutine(prev => prev ? { ...prev, goals: updatedGoals } : null);
 
         const routineRef = doc(firestore, `users/${user!.uid}/focus_routines/${routine.id}`);
         await updateDoc(routineRef, { goals: updatedGoals });
@@ -242,18 +240,20 @@ function FocusRoutineAccordion({ routine, setRoutine }: { routine: WithId<FocusR
 
     if (!routine) return null;
 
+    const completedPoints = routine.goals.reduce((acc, g) => acc + (g.completed ? g.difficulty : 0), 0);
+
     return (
         <Card>
             <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
                 <AccordionItem value="item-1" className="border-b-0">
                     <AccordionTrigger className="p-4 hover:no-underline">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 w-full">
                             <div className="flex-1 grid gap-0.5 text-left">
                                 <div className="font-medium text-lg">Rutina de Enfoque</div>
                                 <p className="text-sm text-muted-foreground">Define tus 3 objetivos principales del día.</p>
                             </div>
                             <div className="flex flex-col items-center justify-center pl-4">
-                                <span className="font-bold text-lg">{routine.goals.reduce((acc, g) => acc + (g.completed ? g.difficulty : 0), 0)}</span>
+                                <span className="font-bold text-lg">{completedPoints}</span>
                                 <span className="text-xs text-muted-foreground">pts</span>
                             </div>
                         </div>
@@ -278,7 +278,7 @@ function FocusRoutineAccordion({ routine, setRoutine }: { routine: WithId<FocusR
                                         value={String(goal.difficulty)}
                                         onValueChange={(value) => handleGoalChange(index, 'difficulty', Number(value))}
                                     >
-                                        <SelectTrigger className="w-[100px] text-xs">
+                                        <SelectTrigger className="w-[100px] text-xs h-8">
                                             <SelectValue placeholder="Dificultad" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -301,12 +301,17 @@ function DailyPlanCard({ routine, setRoutine }: { routine: WithId<FocusRoutine> 
     const { user } = useAuth();
     const firestore = useFirestore();
 
-    // Use a debounce effect to save changes to avoid writing to Firestore on every keystroke
+    const routineRef = useMemo(() => {
+        if (!user || !routine) return null;
+        return doc(firestore, `users/${user.uid}/focus_routines/${routine.id}`);
+    }, [user, routine, firestore]);
+
+    // Debounce effect for saving text area changes
     useEffect(() => {
-        if (!routine || !user) return;
+        if (!routine || !routineRef) return;
 
         const handler = setTimeout(async () => {
-            const routineRef = doc(firestore, `users/${user.uid}/focus_routines/${routine.id}`);
+             // We only update the fields that this component is responsible for.
             await updateDoc(routineRef, {
                 do: routine.do,
                 dont: routine.dont,
@@ -317,10 +322,9 @@ function DailyPlanCard({ routine, setRoutine }: { routine: WithId<FocusRoutine> 
         return () => {
             clearTimeout(handler);
         };
-    }, [routine?.do, routine?.dont, routine?.motivation, routine?.id, user, firestore]);
+    }, [routine?.do, routine?.dont, routine?.motivation, routineRef]);
 
     const handleFieldChange = (field: 'do' | 'dont' | 'motivation', value: string) => {
-        if (!routine) return;
         setRoutine(prev => prev ? { ...prev, [field]: value } : null);
     };
 
@@ -373,5 +377,3 @@ function DailyPlanCard({ routine, setRoutine }: { routine: WithId<FocusRoutine> 
         </Card>
     );
 }
-
-    
