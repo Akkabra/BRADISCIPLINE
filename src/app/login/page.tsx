@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -75,10 +74,8 @@ export default function LoginPage() {
         const user = userCredential.user;
         const firstName = email.split('@')[0];
         
-        // Ensure profile is updated before creating the doc
         await updateProfile(user, {
           displayName: firstName,
-          photoURL: null,
         });
 
         const userRef = doc(firestore, "users", user.uid);
@@ -86,7 +83,7 @@ export default function LoginPage() {
             id: user.uid,
             email: user.email,
             displayName: firstName,
-            photoURL: null,
+            photoURL: user.photoURL, // photoURL will be null here
         });
 
       } else {
