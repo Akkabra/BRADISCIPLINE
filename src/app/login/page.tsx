@@ -14,7 +14,10 @@ import {
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  updateProfile
 } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -26,6 +29,7 @@ export default function LoginPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const auth = useAuth();
+  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
@@ -40,7 +44,18 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      // Create user document in Firestore
+      const userRef = doc(firestore, "users", user.uid);
+      await setDoc(userRef, {
+        id: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL
+      }, { merge: true });
+
       // Redirect will be handled by the useEffect
     } catch (error: any) {
       toast({
@@ -57,7 +72,21 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        const firstName = email.split('@')[0]; // Simple first name from email
+        
+        await updateProfile(user, {
+          displayName: firstName
+        });
+
+        const userRef = doc(firestore, "users", user.uid);
+        await setDoc(userRef, {
+            id: user.uid,
+            email: user.email,
+            displayName: firstName,
+        });
+
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
