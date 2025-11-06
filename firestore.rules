@@ -1,0 +1,115 @@
+/**
+ * @fileOverview Firestore Security Rules for Bra Discipline application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Each user can only access
+ * their own data, which is enforced through path-based authorization.
+ *
+ * Data Structure:
+ * All data is nested under /users/{userId}, ensuring that user data is isolated
+ * and access control can be easily managed through Firestore path matching.
+ * - /users/{userId}: Stores user profile information.
+ * - /users/{userId}/daily_routines/{routineId}: Stores daily routines for each user.
+ * - /users/{userId}/journals/{journalId}: Stores journal entries for each user.
+ *
+ * Key Security Decisions:
+ * - Users can only read and write their own user document and associated subcollections.
+ * - Listing users is not allowed to prevent information disclosure.
+ *
+ * Denormalization for Authorization:
+ * Path-based ownership is used to avoid the need for denormalization, as the `userId`
+ * is already present in the document path.  No `get()` calls are needed to validate
+ * ownership.
+ *
+ * Structural Segregation:
+ * All private user data is stored under the /users/{userId} path, ensuring it's kept separate from any potentially public data.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Enforces that the user is signed in.
+     * @returns {boolean} True if the user is signed in, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Enforces that the request is made by the owner of the resource.
+     * @param {string} userId The user ID to check against the request's authentication UID.
+     * @returns {boolean} True if the user ID matches the request's authentication UID.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Enforces that the request is made by the owner of the resource and the document exists.
+     * @param {string} userId The user ID to check against the request's authentication UID.
+     * @returns {boolean} True if the user ID matches the request's authentication UID and the resource exists.
+     */
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Rules for the /users/{userId} collection.
+     * @path /users/{userId}
+     * @allow (create) User 'user_abc' can create their own user document.
+     * @allow (get) User 'user_abc' can get their own user document.
+     * @allow (update) User 'user_abc' can update their own user document.
+     * @allow (delete) User 'user_abc' can delete their own user document.
+     * @deny (create) User 'user_xyz' cannot create a user document with ID 'user_abc'.
+     * @deny (get) User 'user_xyz' cannot get user document 'user_abc'.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Prevent listing all users
+
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/daily_routines/{routineId} collection.
+     * @path /users/{userId}/daily_routines/{routineId}
+     * @allow (create) User 'user_abc' can create a daily routine in their own user document.
+     * @allow (get) User 'user_abc' can get a daily routine in their own user document.
+     * @allow (update) User 'user_abc' can update a daily routine in their own user document.
+     * @allow (delete) User 'user_abc' can delete a daily routine in their own user document.
+     * @deny (create) User 'user_xyz' cannot create a daily routine in user document 'user_abc'.
+     * @deny (get) User 'user_xyz' cannot get a daily routine in user document 'user_abc'.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/daily_routines/{routineId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/journals/{journalId} collection.
+     * @path /users/{userId}/journals/{journalId}
+     * @allow (create) User 'user_abc' can create a journal entry in their own user document.
+     * @allow (get) User 'user_abc' can get a journal entry in their own user document.
+     * @allow (update) User 'user_abc' can update a journal entry in their own user document.
+     * @allow (delete) User 'user_abc' can delete a journal entry in their own user document.
+     * @deny (create) User 'user_xyz' cannot create a journal entry in user document 'user_abc'.
+     * @deny (get) User 'user_xyz' cannot get a journal entry in user document 'user_abc'.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/journals/{journalId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}

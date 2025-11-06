@@ -1,0 +1,104 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the Bra Discipline application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "googleId": {
+          "type": "string",
+          "description": "Google ID of the user, used for Google authentication."
+        }
+      },
+      "required": [
+        "id",
+        "email"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile data. Path-based ownership: only the user with the matching UID can read/write. All documents in the 'users' collection share the same security requirements.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/daily_routines/{routineId}",
+        "definition": {
+          "entityName": "DailyRoutine",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores daily routines for each user. Path-based ownership: only the user can read/write their own routines.  No denormalized authorization data is necessary because access is determined by the user ID in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "routineId",
+              "description": "The unique ID of the routine."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/journals/{journalId}",
+        "definition": {
+          "entityName": "Journal",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores journal entries for each user. Path-based ownership: only the user can read/write their own journals. No denormalized authorization data is necessary because access is determined by the user ID in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "journalId",
+              "description": "The unique ID of the journal entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed to support user authentication and data storage for the 'Bra Discipline' application. It prioritizes authorization independence and clear access patterns.\n\n*   **/users/{userId}**:  Stores user profiles.  This enables path-based ownership, simplifying security rules (only the authenticated user can access their own profile).\n*   **/users/{userId}/daily_routines/{routineId}**: Stores daily routine data specific to each user. This nested structure maintains the user's ownership and avoids mixing data with different access requirements. This path enables simple path-based ownership. By storing all daily routine data under the user's document, we can easily query and manage this data. Daily routine documents do not contain any user authorization data, as the user ID is implicit in the path.\n*   **/users/{userId}/journals/{journalId}**: Stores journal entries specific to each user. This nested structure maintains the user's ownership, which simplifies security rules.\n\n\n**Authorization Independence:**\n\nAuthorization independence is achieved through path-based ownership for `User`, `DailyRoutine`, and `Journal` documents. This eliminates the need for `get()` calls in security rules to determine access, making rules more efficient and robust.\n\n**QAPs (Rules are not Filters):**\n\nThe structure supports secure `list` operations (QAPs) because all documents within a collection share the same security requirements. Listing routines or journals under a user's document is secure because the path inherently restricts access to the user's own data.  The homogeneous security posture within each collection ensures that rules are not used as filters."
+  }
+}
