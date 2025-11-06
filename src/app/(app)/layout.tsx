@@ -10,6 +10,7 @@ import {
   Settings,
   UserCircle,
   LogOut,
+  Flag,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -42,6 +43,7 @@ import { signOut } from 'firebase/auth';
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Inicio' },
   { href: '/routine', icon: CalendarCheck, label: 'Rutina' },
+  { href: '/goals', icon: Flag, label: 'Metas' },
   { href: '/journal', icon: BookMarked, label: 'Diario' },
   { href: '/progress', icon: BarChart3, label: 'Progreso' },
   { href: '/family', icon: HeartHandshake, label: 'Familia' },
@@ -184,3 +186,5 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+    

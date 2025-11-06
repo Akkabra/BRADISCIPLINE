@@ -92,6 +92,47 @@
         "completed",
         "createdAt"
       ]
+    },
+    "Goal": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Goal",
+      "type": "object",
+      "description": "Represents a user-defined goal with a deadline.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who owns this goal."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the goal."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the goal."
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The target completion date for the goal."
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Whether the goal has been completed."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the goal was created."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "dueDate",
+        "completed",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -197,8 +238,29 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}/goals/{goalId}",
+        "definition": {
+          "entityName": "Goal",
+          "schema": {
+            "$ref": "#/backend/entities/Goal"
+          },
+          "description": "Stores user-defined goals. Path-based ownership ensures a user can only access their own goals.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "goalId",
+              "description": "The unique ID for the goal document."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "This Firestore structure is designed to support user authentication and data storage for the 'Bra Discipline' application. It prioritizes authorization independence and clear access patterns.\n\n*   **/users/{userId}**:  Stores user profiles.  This enables path-based ownership, simplifying security rules (only the authenticated user can access their own profile).\n*   **/users/{userId}/daily_routines/{routineId}**: Stores daily routine data specific to each user. This nested structure maintains the user's ownership and avoids mixing data with different access requirements. This path enables simple path-based ownership. By storing all daily routine data under the user's document, we can easily query and manage this data. Daily routine documents do not contain any user authorization data, as the user ID is implicit in the path.\n*   **/users/{userId}/journals/{journalId}**: Stores journal entries specific to each user. This nested structure maintains the user's ownership, which simplifies security rules.\n*   **/users/{userId}/family_events/{eventId}**: Stores planned family events. This nested structure ensures user ownership and simplifies security rules.\n*   **/users/{userId}/connection_tasks/{taskId}**: Stores family connection tasks. This subcollection also leverages path-based ownership for secure data access.\n\n\n**Authorization Independence:**\n\nAuthorization independence is achieved through path-based ownership for all user-related data. This eliminates the need for `get()` calls in security rules to determine access, making rules more efficient and robust.\n\n**QAPs (Rules are not Filters):**\n\nThe structure supports secure `list` operations (QAPs) because all documents within a collection share the same security requirements. Listing data under a user's document is secure because the path inherently restricts access to that user's own data. The homogeneous security posture within each collection ensures that rules are not used as filters."
+    "reasoning": "This Firestore structure is designed to support user authentication and data storage for the 'Bra Discipline' application. It prioritizes authorization independence and clear access patterns.\n\n*   **/users/{userId}**:  Stores user profiles.  This enables path-based ownership, simplifying security rules (only the authenticated user can access their own profile).\n*   **/users/{userId}/daily_routines/{routineId}**: Stores daily routine data specific to each user. This nested structure maintains the user's ownership and avoids mixing data with different access requirements. This path enables simple path-based ownership. By storing all daily routine data under the user's document, we can easily query and manage this data. Daily routine documents do not contain any user authorization data, as the user ID is implicit in the path.\n*   **/users/{userId}/journals/{journalId}**: Stores journal entries specific to each user. This nested structure maintains the user's ownership, which simplifies security rules.\n*   **/users/{userId}/family_events/{eventId}**: Stores planned family events. This nested structure ensures user ownership and simplifies security rules.\n*   **/users/{userId}/connection_tasks/{taskId}**: Stores family connection tasks. This subcollection also leverages path-based ownership for secure data access.\n*   **/users/{userId}/goals/{goalId}**: Stores user-defined goals. This subcollection also leverages path-based ownership for secure data access.\n\n\n**Authorization Independence:**\n\nAuthorization independence is achieved through path-based ownership for all user-related data. This eliminates the need for `get()` calls in security rules to determine access, making rules more efficient and robust.\n\n**QAPs (Rules are not Filters):**\n\nThe structure supports secure `list` operations (QAPs) because all documents within a collection share the same security requirements. Listing data under a user's document is secure because the path inherently restricts access to that user's own data. The homogeneous security posture within each collection ensures that rules are not used as filters."
   }
 }
+    

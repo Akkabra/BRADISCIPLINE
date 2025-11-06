@@ -13,6 +13,7 @@
  * - /users/{userId}/journals/{journalId}: Stores journal entries for each user.
  * - /users/{userId}/family_events/{eventId}: Stores planned family connection events.
  * - /users/{userId}/connection_tasks/{taskId}: Stores repeatable family connection tasks.
+ * - /users/{userId}/goals/{goalId}: Stores user-defined goals.
  *
  * Key Security Decisions:
  * - Users can only read and write their own user document and associated subcollections.
@@ -123,5 +124,15 @@ service cloud.firestore {
     match /users/{userId}/connection_tasks/{taskId} {
       allow get, list, create, update, delete: if isOwner(userId);
     }
+
+    /**
+     * @description Rules for the /users/{userId}/goals/{goalId} subcollection.
+     * @path /users/{userId}/goals/{goalId}
+     * @principle Enforces that users can only manage their own goals.
+     */
+    match /users/{userId}/goals/{goalId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+    }
   }
 }
+    
