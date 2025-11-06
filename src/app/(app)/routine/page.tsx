@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Award, CheckCircle2, Loader2 } from 'lucide-react';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, addDoc, updateDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
 import { Input } from '@/components/ui/input';
@@ -50,51 +50,47 @@ function FocusRoutineCard({ onProgressChange, setCompletedObjectivesCount }: { o
     const { user } = useAuth();
     const firestore = useFirestore();
     const todayStr = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+    
     const focusRoutinesCol = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/focus_routines`) : null, [firestore, user]);
 
-    useEffect(() => {
+    const getTodaysRoutine = useCallback(async () => {
         if (!focusRoutinesCol || !user) return;
-    
-        const fetchOrCreateRoutine = async () => {
-            setLoading(true);
-            const q = query(focusRoutinesCol, where("date", "==", todayStr));
-            const snapshot = await getDocs(q);
-    
-            if (!snapshot.empty) {
-                const doc = snapshot.docs[0];
-                const data = doc.data() as FocusRoutine;
-                setRoutine({ ...data, id: doc.id });
-                setLoading(false);
-            } else {
-                const newRoutineData: Omit<FocusRoutine, 'id'> = {
-                    userId: user.uid,
-                    date: todayStr,
-                    objective1: '',
-                    objective2: '',
-                    objective3: '',
-                    completed1: false,
-                    completed2: false,
-                    completed3: false,
-                    difficulty1: 'easy',
-                    difficulty2: 'easy',
-                    difficulty3: 'easy',
-                    createdAt: serverTimestamp(),
-                };
-                try {
-                    // Create the doc, then set the state with the new doc's ID
-                    const docRef = await addDoc(focusRoutinesCol, newRoutineData);
-                    setRoutine({ ...newRoutineData, id: docRef.id });
-                } catch (error) {
-                    console.error("Error creating new routine:", error);
-                } finally {
-                    setLoading(false);
-                }
+        setLoading(true);
+
+        const q = query(focusRoutinesCol, where("date", "==", todayStr));
+        const snapshot = await getDocs(q);
+
+        if (!snapshot.empty) {
+            const doc = snapshot.docs[0];
+            setRoutine({ id: doc.id, ...doc.data() } as FocusRoutine);
+        } else {
+            const newRoutineData: Omit<FocusRoutine, 'id'> = {
+                userId: user.uid,
+                date: todayStr,
+                objective1: '',
+                objective2: '',
+                objective3: '',
+                completed1: false,
+                completed2: false,
+                completed3: false,
+                difficulty1: 'easy',
+                difficulty2: 'easy',
+                difficulty3: 'easy',
+                createdAt: serverTimestamp(),
+            };
+            try {
+                const docRef = await addDoc(focusRoutinesCol, newRoutineData);
+                setRoutine({ id: docRef.id, ...newRoutineData });
+            } catch (error) {
+                console.error("Error creating new routine:", error);
             }
-        };
-    
-        fetchOrCreateRoutine();
-    
-    }, [focusRoutinesCol, todayStr, user]);
+        }
+        setLoading(false);
+    }, [focusRoutinesCol, user, todayStr]);
+
+    useEffect(() => {
+        getTodaysRoutine();
+    }, [getTodaysRoutine]);
 
     useEffect(() => {
         if (routine) {
@@ -111,16 +107,21 @@ function FocusRoutineCard({ onProgressChange, setCompletedObjectivesCount }: { o
         }
     }, [routine, onProgressChange, setCompletedObjectivesCount]);
 
-
     const updateRoutine = (field: keyof FocusRoutine, value: any) => {
-        if (routine?.id && user) {
-            const routineRef = doc(firestore, `users/${user.uid}/focus_routines/${routine.id}`);
-            updateDoc(routineRef, { [field]: value });
-            setRoutine(prev => prev ? { ...prev, [field]: value } : null);
-        }
+        if (!routine?.id || !user) return;
+
+        const updatedRoutine = { ...routine, [field]: value };
+        setRoutine(updatedRoutine);
+
+        const routineRef = doc(firestore, `users/${user.uid}/focus_routines/${routine.id}`);
+        updateDoc(routineRef, { [field]: value }).catch(err => {
+            console.error("Failed to update routine:", err);
+            // Optionally revert state on failure
+            setRoutine(routine); 
+        });
     };
     
-    if (loading || !routine) {
+    if (loading) {
         return (
              <Card>
                 <CardHeader>
@@ -132,6 +133,17 @@ function FocusRoutineCard({ onProgressChange, setCompletedObjectivesCount }: { o
                 </CardContent>
             </Card>
         )
+    }
+
+    if (!routine) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Error</CardTitle>
+                    <CardDescription>No se pudo cargar o crear la rutina de enfoque.</CardDescription>
+                </CardHeader>
+            </Card>
+        );
     }
 
     return (
@@ -152,7 +164,7 @@ function FocusRoutineCard({ onProgressChange, setCompletedObjectivesCount }: { o
                             <Checkbox 
                                 id={`objective-${index}`} 
                                 checked={completed}
-                                onCheckedChange={() => updateRoutine(`completed${i}`, !completed)}
+                                onCheckedChange={(isChecked) => updateRoutine(`completed${i}`, isChecked)}
                                 className="h-8 w-8 rounded-md border-2"
                             />
                             <Input
@@ -277,5 +289,3 @@ function TaskCard({ task, isCompleted, onToggle }: { task: {id: string, title: s
         </Card>
     )
 }
-
-    
