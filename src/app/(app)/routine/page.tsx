@@ -8,7 +8,7 @@ import { Award, CheckCircle2, Loader2, BookOpen, Ban, Sparkles } from 'lucide-re
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useAuth, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { WithId } from '@/firebase';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -93,8 +93,10 @@ export default function RoutinePage() {
     }, [user, todayString, routinesCollectionRef]);
 
     useEffect(() => {
-        getOrCreateRoutine();
-    }, [getOrCreateRoutine]);
+        if(user && firestore) {
+            getOrCreateRoutine();
+        }
+    }, [user, firestore, getOrCreateRoutine]);
 
     const handleTaskToggle = (taskId: string) => {
         setCompletedTasks(prev => 
@@ -371,4 +373,5 @@ function DailyPlanCard({ routine, setRoutine }: { routine: WithId<FocusRoutine> 
         </Card>
     );
 }
+
     
