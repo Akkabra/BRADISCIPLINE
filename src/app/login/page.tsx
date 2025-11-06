@@ -47,7 +47,6 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
-      // Create user document in Firestore
       const userRef = doc(firestore, "users", user.uid);
       await setDoc(userRef, {
         id: user.uid,
@@ -74,10 +73,12 @@ export default function LoginPage() {
       if (isSignUp) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        const firstName = email.split('@')[0]; // Simple first name from email
+        const firstName = email.split('@')[0];
         
+        // Ensure profile is updated before creating the doc
         await updateProfile(user, {
-          displayName: firstName
+          displayName: firstName,
+          photoURL: null,
         });
 
         const userRef = doc(firestore, "users", user.uid);
@@ -85,6 +86,7 @@ export default function LoginPage() {
             id: user.uid,
             email: user.email,
             displayName: firstName,
+            photoURL: null,
         });
 
       } else {
@@ -97,7 +99,8 @@ export default function LoginPage() {
         title: isSignUp ? 'Error de Registro' : 'Error de Inicio de Sesión',
         description: error.message,
       });
-      setIsLoading(false);
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -161,7 +164,7 @@ export default function LoginPage() {
             </form>
             <div className="mt-4 text-center text-sm">
               {isSignUp ? '¿Ya tienes una cuenta?' : '¿No tienes cuenta?'}
-              <Button variant="link" onClick={() => setIsSignUp(!isSignUp)} className="text-primary p-1">
+              <Button variant="link" onClick={() => setIsSignUp(!isSignUp)} className="text-primary p-1" disabled={isLoading || isGoogleLoading}>
                 {isSignUp ? 'Inicia Sesión' : 'Regístrate'}
               </Button>
             </div>
