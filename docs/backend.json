@@ -168,23 +168,34 @@
                 "description": "Points awarded for completing this goal."
               }
             },
-            "required": ["text", "completed", "difficulty"]
+            "required": [
+              "text",
+              "completed",
+              "difficulty"
+            ]
           }
         },
         "do": {
-            "type": "string",
-            "description": "A description of what the user will do today."
+          "type": "string",
+          "description": "A description of what the user will do today."
         },
         "dont": {
-            "type": "string",
-            "description": "A description of what the user will NOT do today."
+          "type": "string",
+          "description": "A description of what the user will NOT do today."
         },
         "motivation": {
-            "type": "string",
-            "description": "A description of what motivates the user today."
+          "type": "string",
+          "description": "A description of what motivates the user today."
         }
       },
-      "required": ["userId", "date", "goals", "do", "dont", "motivation"]
+      "required": [
+        "userId",
+        "date",
+        "goals",
+        "do",
+        "dont",
+        "motivation"
+      ]
     }
   },
   "auth": {

@@ -13,6 +13,7 @@ import type { WithId } from '@/firebase';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 const dailyTasks = [
     { id: 'task-1', title: 'Ducha Fría', description: 'Activa tu cuerpo y mente. Sin excusas.', points: 10 },
@@ -298,14 +299,27 @@ function DailyPlanCard({ routine, setRoutine }: { routine: WithId<FocusRoutine> 
     const { user } = useAuth();
     const firestore = useFirestore();
 
-    const handleFieldChange = async (field: 'do' | 'dont' | 'motivation', value: string) => {
+    // Use a debounce effect to save changes to avoid writing to Firestore on every keystroke
+    useEffect(() => {
+        if (!routine || !user) return;
+
+        const handler = setTimeout(async () => {
+            const routineRef = doc(firestore, `users/${user.uid}/focus_routines/${routine.id}`);
+            await updateDoc(routineRef, {
+                do: routine.do,
+                dont: routine.dont,
+                motivation: routine.motivation,
+            });
+        }, 1000); // Wait 1 second after the user stops typing
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [routine?.do, routine?.dont, routine?.motivation, routine?.id, user, firestore]);
+
+    const handleFieldChange = (field: 'do' | 'dont' | 'motivation', value: string) => {
         if (!routine) return;
-
-        const updatedRoutine = { ...routine, [field]: value };
-        setRoutine(updatedRoutine);
-
-        const routineRef = doc(firestore, `users/${user!.uid}/focus_routines/${routine.id}`);
-        await updateDoc(routineRef, { [field]: value });
+        setRoutine(prev => prev ? { ...prev, [field]: value } : null);
     };
 
     if (!routine) return null;
