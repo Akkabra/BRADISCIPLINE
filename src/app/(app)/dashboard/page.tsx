@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Zap, Target, TrendingUp, Sparkles } from 'lucide-react';
+import { Zap, Target, TrendingUp, Sparkles, Loader2 } from 'lucide-react';
 import React from 'react';
 import {
   ChartConfig,
@@ -17,6 +17,7 @@ import {
   RadarChart,
 } from "recharts"
 import Link from 'next/link';
+import { getAIQuote } from '@/app/actions';
 
 const chartData = [
   { area: "Físico", discipline: 86, month: "June" },
@@ -38,20 +39,31 @@ const chartConfig = {
 
 export default function DashboardPage() {
   const [quote, setQuote] = React.useState('');
+  const [isQuoteLoading, setIsQuoteLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const quotes = [
-      "Cada día que cumples tu palabra, te respetas más a ti mismo.",
-      "No esperes motivación, construye disciplina.",
-      "El dolor de la disciplina o el dolor del arrepentimiento. Tú eliges.",
-      "La constancia es la prueba de tu propósito.",
-    ];
-    setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
+    const fetchQuote = async () => {
+      setIsQuoteLoading(true);
+      try {
+        const result = await getAIQuote();
+        if (result.quote) {
+          setQuote(result.quote);
+        } else {
+          setQuote("El dolor de la disciplina o el dolor del arrepentimiento. Tú eliges."); // Fallback quote
+        }
+      } catch (error) {
+        console.error("Failed to fetch AI quote:", error);
+        setQuote("La constancia es la prueba de tu propósito."); // Fallback quote on error
+      } finally {
+        setIsQuoteLoading(false);
+      }
+    };
+    fetchQuote();
   }, []);
 
   return (
     <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
         <Card className="sm:col-span-2 md:col-span-1">
           <CardHeader className="pb-2">
             <CardDescription className="font-headline text-lg">BIENVENIDO, GUERRERO</CardDescription>
@@ -76,8 +88,8 @@ export default function DashboardPage() {
               <Sparkles className="h-4 w-4 text-primary" />
               Impulso del Día
             </CardDescription>
-            <CardTitle className="text-xl leading-snug">
-              &ldquo;{quote}&rdquo;
+            <CardTitle className="text-xl leading-snug h-[56px] flex items-center">
+              {isQuoteLoading ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : `“${quote}”`}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -89,14 +101,14 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Resumen de Disciplina</CardTitle>
             <CardDescription>Tu nivel de cumplimiento en las áreas clave este mes.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[300px]">
+          <CardContent className="flex justify-center">
+            <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[250px] w-full">
               <RadarChart data={chartData}>
                 <ChartTooltip
                   cursor={false}

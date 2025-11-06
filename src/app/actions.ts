@@ -2,6 +2,7 @@
 'use server';
 
 import { analyzeNocturnalJournal } from '@/ai/flows/analyze-nocturnal-journal';
+import { generateQuote } from '@/ai/flows/generate-quote-flow';
 import { z } from 'zod';
 
 const JournalAnalysisInput = z.object({
@@ -28,5 +29,15 @@ export async function getJournalAnalysis(formData: FormData) {
   } catch (e) {
     console.error(e);
     return { error: 'Failed to analyze journal entries.' };
+  }
+}
+
+export async function getAIQuote() {
+  try {
+    const result = await generateQuote();
+    return { quote: result.quote };
+  } catch (e) {
+    console.error(e);
+    return { error: 'Failed to generate quote.' };
   }
 }
