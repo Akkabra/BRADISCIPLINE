@@ -168,7 +168,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <DropdownMenuItem asChild>
                     <Link href="/settings">Configuración</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>Soporte</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => window.location.href = 'mailto:soporte@bradiscipline.com'} className="cursor-pointer">Soporte</DropdownMenuItem>
                   <DropdownMenuSeparator />
                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
@@ -186,5 +186,3 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
-    
