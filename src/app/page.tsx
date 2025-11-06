@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Target, BarChart, Users, Zap, Star } from 'lucide-react';
+import { CheckCircle2, Target, BarChart, Users, Zap } from 'lucide-react';
 import { Logo } from '@/components/logo';
 
 export default function LandingPage() {
@@ -98,7 +98,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-card border-y border-border/50">
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-background">
           <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
             <div className="space-y-3">
               <h2 className="text-3xl font-headline tracking-tighter md:text-4xl/tight text-primary">
@@ -135,7 +135,7 @@ export default function LandingPage() {
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
   return (
-    <div className="relative group grid gap-2 p-6 rounded-lg bg-background/50 hover:bg-background transition-all duration-300">
+    <div className="relative group grid gap-2 p-6 rounded-lg bg-card/50 hover:bg-card transition-all duration-300">
        <div className="absolute -inset-px bg-gradient-to-r from-primary/20 to-primary/80 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       <div className="relative flex items-center gap-3">
         {icon}
