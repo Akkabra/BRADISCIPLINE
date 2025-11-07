@@ -454,8 +454,7 @@ function TaskDialogContent({ onFinished }: { onFinished: () => void }) {
     const [points, setPoints] = useState(10);
     const [isSaving, setIsSaving] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const handleSubmit = async () => {
         if (!user || !title || !description) return;
         setIsSaving(true);
         const tasksCollectionRef = collection(firestore, `users/${user.uid}/routine_tasks`);
@@ -477,7 +476,6 @@ function TaskDialogContent({ onFinished }: { onFinished: () => void }) {
 
     return (
         <DialogContent>
-          <form onSubmit={handleSubmit}>
             <DialogHeader>
                 <DialogTitle>Añadir Tarea Personalizada</DialogTitle>
                 <DialogDescription>
@@ -500,12 +498,11 @@ function TaskDialogContent({ onFinished }: { onFinished: () => void }) {
             </div>
             <DialogFooter>
                 <Button type="button" variant="outline" onClick={onFinished}>Cancelar</Button>
-                <Button type="submit" disabled={isSaving}>
+                <Button type="button" onClick={handleSubmit} disabled={isSaving}>
                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                     Guardar Tarea
                 </Button>
             </DialogFooter>
-          </form>
         </DialogContent>
     );
 }
