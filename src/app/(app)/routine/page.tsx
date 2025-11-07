@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 type RoutineTask = {
     userId: string;
@@ -454,7 +454,8 @@ function TaskDialogContent({ onFinished }: { onFinished: () => void }) {
     const [points, setPoints] = useState(10);
     const [isSaving, setIsSaving] = useState(false);
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
         if (!user || !title || !description) return;
         setIsSaving(true);
         const tasksCollectionRef = collection(firestore, `users/${user.uid}/routine_tasks`);
@@ -476,6 +477,7 @@ function TaskDialogContent({ onFinished }: { onFinished: () => void }) {
 
     return (
         <DialogContent>
+          <form onSubmit={handleSubmit}>
             <DialogHeader>
                 <DialogTitle>Añadir Tarea Personalizada</DialogTitle>
                 <DialogDescription>
@@ -497,14 +499,13 @@ function TaskDialogContent({ onFinished }: { onFinished: () => void }) {
                 </div>
             </div>
             <DialogFooter>
-                 <DialogClose asChild>
-                    <Button variant="outline">Cancelar</Button>
-                </DialogClose>
-                <Button onClick={handleSubmit} disabled={isSaving}>
+                <Button type="button" variant="outline" onClick={onFinished}>Cancelar</Button>
+                <Button type="submit" disabled={isSaving}>
                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                     Guardar Tarea
                 </Button>
             </DialogFooter>
+          </form>
         </DialogContent>
     );
 }
