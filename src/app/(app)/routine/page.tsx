@@ -129,7 +129,7 @@ export default function RoutinePage() {
         <div className="container mx-auto py-8 max-w-4xl">
             <div className="mb-8 text-center">
                 <h1 className="text-4xl font-headline tracking-tight text-primary">RUTINA DIARIA</h1>
-                <p className="text-muted-foreground mt-2">La ejecución es la victoria. Completa tus tareas una por una.</p>
+                <p className="text-muted-foreground mt-2">Un paso a la vez. Construye tu día.</p>
             </div>
 
             <Card className="mb-8 border-primary/20">

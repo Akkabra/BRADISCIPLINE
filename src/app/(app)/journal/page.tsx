@@ -125,7 +125,7 @@ export default function JournalPage() {
         <Card>
           <CardHeader>
             <CardTitle>Diario de Reflexión</CardTitle>
-            <CardDescription>El día termina, la lección empieza. Registra tu progreso.</CardDescription>
+            <CardDescription>Reflexiona sobre el día. Entiende tu proceso.</CardDescription>
           </CardHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>

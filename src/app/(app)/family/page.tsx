@@ -108,8 +108,8 @@ export default function FamilyPage() {
     return (
         <div className="grid gap-8">
              <div className="text-center">
-                <h1 className="text-3xl md:text-4xl font-headline tracking-tight text-primary">ESPACIO PADRE-HIJO</h1>
-                <p className="text-muted-foreground mt-2">Lidera tu familia con propósito y presencia.</p>
+                <h1 className="text-3xl md:text-4xl font-headline tracking-tight text-primary">ESPACIO FAMILIAR</h1>
+                <p className="text-muted-foreground mt-2">El pilar de tu esfuerzo. Conecta con ellos.</p>
             </div>
             
             <div className="grid md:grid-cols-2 gap-8">

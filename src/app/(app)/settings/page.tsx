@@ -9,7 +9,7 @@ export default function SettingsPage() {
     <div className="grid gap-6 max-w-2xl mx-auto">
        <div className="text-center">
         <h1 className="text-4xl font-headline tracking-tight text-primary">CONFIGURACIÓN</h1>
-        <p className="text-muted-foreground mt-2">Personaliza tu experiencia y ajusta tus metas.</p>
+        <p className="text-muted-foreground mt-2">Ajusta la herramienta a tu camino.</p>
       </div>
       <Card>
         <CardHeader>

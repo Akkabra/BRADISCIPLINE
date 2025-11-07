@@ -63,7 +63,7 @@ export default function GoalsPage() {
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="text-center sm:text-left">
                     <h1 className="text-3xl md:text-4xl font-headline tracking-tight text-primary">METAS</h1>
-                    <p className="text-muted-foreground mt-2">Define tu norte. Conquista tus ambiciones.</p>
+                    <p className="text-muted-foreground mt-2">Define tus objetivos. Reconstruye tu camino.</p>
                 </div>
                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>

@@ -66,7 +66,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
         <Card className="sm:col-span-2 md:col-span-1">
           <CardHeader className="pb-2">
-            <CardDescription className="font-headline text-lg">BIENVENIDO, GUERRERO</CardDescription>
+            <CardDescription className="font-headline text-lg">EMPIEZA EL DÍA</CardDescription>
             <CardTitle className="text-4xl text-primary">Día 12</CardTitle>
           </CardHeader>
           <CardContent>

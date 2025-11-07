@@ -44,7 +44,7 @@ export default function ProgressPage() {
     <div className="grid gap-8">
       <div className="text-center">
         <h1 className="text-3xl md:text-4xl font-headline tracking-tight text-primary">TU PROGRESO</h1>
-        <p className="text-muted-foreground mt-2">Los números no mienten. Mide tu crecimiento.</p>
+        <p className="text-muted-foreground mt-2">Observa tu evolución. Cada paso cuenta.</p>
       </div>
 
       <Card>
