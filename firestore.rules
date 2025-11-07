@@ -13,6 +13,7 @@
  * - /users/{userId}/connection_tasks/{taskId}: Stores repeatable family connection tasks.
  * - /users/{userId}/goals/{goalId}: Stores user-defined goals.
  * - /users/{userId}/focus_routines/{routineId}: Stores daily focus goals and intentions.
+ * - /users/{userId}/routine_tasks/{taskId}: Stores custom daily routine tasks.
  *
  * Key Security Decisions:
  * - Users can only read and write their own user document and associated subcollections.
@@ -111,6 +112,16 @@ service cloud.firestore {
     match /users/{userId}/focus_routines/{routineId} {
         allow get, list, create, update, delete: if isOwner(userId);
     }
+
+    /**
+     * @description Rules for the /users/{userId}/routine_tasks/{taskId} subcollection.
+     * @path /users/{userId}/routine_tasks/{taskId}
+     * @principle Enforces that users can only manage their own custom routine tasks.
+     */
+    match /users/{userId}/routine_tasks/{taskId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+    }
   }
 }
+
     

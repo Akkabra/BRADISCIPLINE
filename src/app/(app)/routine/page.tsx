@@ -4,22 +4,25 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import { Award, CheckCircle2, Loader2, BookOpen, Ban, Sparkles } from 'lucide-react';
+import { Award, CheckCircle2, Loader2, BookOpen, Ban, Sparkles, Plus, Trash2 } from 'lucide-react';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { useAuth, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp, addDoc, deleteDoc, orderBy } from 'firebase/firestore';
 import type { WithId } from '@/firebase';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
-const dailyTasks = [
-    { id: 'task-1', title: 'Ducha Fría', description: 'Activa tu cuerpo y mente. Sin excusas.', points: 10 },
-    { id: 'task-4', title: '1 Hora de Proyecto/Pasión', description: 'Construye tu futuro. Invierte en ti.', points: 10 },
-    { id: 'task-5', title: 'Reflexión Nocturna', description: 'Evalúa tu día. Aprende. Mejora.', points: 10 },
-];
+type RoutineTask = {
+    userId: string;
+    title: string;
+    description: string;
+    points: number;
+    createdAt: any;
+};
 
 type Goal = {
     text: string;
@@ -34,6 +37,7 @@ type FocusRoutine = {
     do: string;
     dont: string;
     motivation: string;
+    completedTasks: string[];
 };
 
 const difficulties = [
@@ -42,71 +46,111 @@ const difficulties = [
     { label: 'Difícil', value: 30 },
 ];
 
+const defaultTasks: Omit<RoutineTask, 'userId' | 'createdAt'>[] = [
+    { title: 'Ducha Fría', description: 'Activa tu cuerpo y mente. Sin excusas.', points: 10 },
+    { title: '1 Hora de Proyecto/Pasión', description: 'Construye tu futuro. Invierte en ti.', points: 10 },
+    { title: 'Reflexión Nocturna', description: 'Evalúa tu día. Aprende. Mejora.', points: 10 },
+];
+
+
 export default function RoutinePage() {
-    const [completedTasks, setCompletedTasks] = useState<string[]>([]);
-    
     const { user } = useAuth();
     const firestore = useFirestore();
     const [routine, setRoutine] = useState<WithId<FocusRoutine> | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
 
     const todayString = useMemo(() => new Date().toISOString().split('T')[0], []);
+    
+    const tasksQuery = useMemoFirebase(() => user ? query(collection(firestore, `users/${user.uid}/routine_tasks`), orderBy('createdAt', 'asc')) : null, [user, firestore]);
+    const { data: routineTasks, isLoading: tasksLoading } = useCollection<RoutineTask>(tasksQuery);
 
-    useEffect(() => {
-        const getOrCreateRoutine = async () => {
-            if (!user || !firestore) {
-                setIsLoading(false);
-                return;
-            };
-
-            setIsLoading(true);
-            const routinesCollectionRef = collection(firestore, `users/${user.uid}/focus_routines`);
-            const q = query(routinesCollectionRef, where('date', '==', todayString));
-            
-            try {
-                const querySnapshot = await getDocs(q);
-                if (!querySnapshot.empty) {
-                    const docData = querySnapshot.docs[0];
-                    setRoutine({ id: docData.id, ...docData.data() } as WithId<FocusRoutine>);
-                } else {
-                    const newRoutineData: FocusRoutine = {
-                        userId: user.uid,
-                        date: todayString,
-                        goals: [
-                            { text: '', completed: false, difficulty: 10 },
-                            { text: '', completed: false, difficulty: 10 },
-                            { text: '', completed: false, difficulty: 10 },
-                        ],
-                        do: '',
-                        dont: '',
-                        motivation: '',
-                    };
-                    const newDocRef = doc(routinesCollectionRef);
-                    await setDoc(newDocRef, newRoutineData);
-                    setRoutine({ id: newDocRef.id, ...newRoutineData });
-                }
-            } catch (error) {
-                console.error("Error getting or creating routine:", error);
-            } finally {
-                setIsLoading(false);
-            }
+    const getOrCreateRoutine = useCallback(async () => {
+        if (!user || !firestore) {
+            setIsLoading(false);
+            return;
         };
+
+        setIsLoading(true);
+        const routinesCollectionRef = collection(firestore, `users/${user.uid}/focus_routines`);
+        const q = query(routinesCollectionRef, where('date', '==', todayString));
         
-        getOrCreateRoutine();
+        try {
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const docData = querySnapshot.docs[0];
+                setRoutine({ id: docData.id, ...docData.data() } as WithId<FocusRoutine>);
+            } else {
+                const newRoutineData: FocusRoutine = {
+                    userId: user.uid,
+                    date: todayString,
+                    goals: [
+                        { text: '', completed: false, difficulty: 10 },
+                        { text: '', completed: false, difficulty: 10 },
+                        { text: '', completed: false, difficulty: 10 },
+                    ],
+                    do: '',
+                    dont: '',
+                    motivation: '',
+                    completedTasks: [],
+                };
+                const newDocRef = doc(routinesCollectionRef);
+                await setDoc(newDocRef, newRoutineData);
+                setRoutine({ id: newDocRef.id, ...newRoutineData });
+            }
+        } catch (error) {
+            console.error("Error getting or creating routine:", error);
+        } finally {
+            setIsLoading(false);
+        }
     }, [user, firestore, todayString]);
 
-    const handleTaskToggle = (taskId: string) => {
-        setCompletedTasks(prev => 
-            prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
-        );
+    const seedDefaultTasks = useCallback(async () => {
+        if(user && firestore && !tasksLoading && routineTasks?.length === 0) {
+            const tasksCollectionRef = collection(firestore, `users/${user.uid}/routine_tasks`);
+            for(const task of defaultTasks) {
+                await addDoc(tasksCollectionRef, {
+                    ...task,
+                    userId: user.uid,
+                    createdAt: serverTimestamp(),
+                });
+            }
+        }
+    }, [user, firestore, tasksLoading, routineTasks]);
+    
+    useEffect(() => {
+        getOrCreateRoutine();
+    }, [getOrCreateRoutine]);
+
+    useEffect(() => {
+        seedDefaultTasks();
+    }, [seedDefaultTasks]);
+
+    const handleTaskToggle = async (taskId: string) => {
+        if (!routine) return;
+        const newCompletedTasks = routine.completedTasks.includes(taskId)
+            ? routine.completedTasks.filter(id => id !== taskId)
+            : [...routine.completedTasks, taskId];
+        
+        setRoutine(prev => prev ? { ...prev, completedTasks: newCompletedTasks } : null);
+        const routineRef = doc(firestore, `users/${user!.uid}/focus_routines/${routine.id}`);
+        await updateDoc(routineRef, { completedTasks: newCompletedTasks });
     };
 
+    const handleDeleteTask = async (taskId: string) => {
+        if (!user) return;
+        if(confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+            const taskRef = doc(firestore, `users/${user.uid}/routine_tasks/${taskId}`);
+            await deleteDoc(taskRef);
+        }
+    }
+
     const totalTaskPoints = useMemo(() => {
-        return completedTasks.reduce((acc, taskId) => {
-            const task = dailyTasks.find(t => t.id === taskId);
+        return routine?.completedTasks.reduce((acc, taskId) => {
+            const task = routineTasks?.find(t => t.id === taskId);
             return acc + (task ? task.points : 0);
-        }, 0);
-    }, [completedTasks]);
+        }, 0) || 0;
+    }, [routine?.completedTasks, routineTasks]);
     
     const totalGoalPoints = useMemo(() => {
         return routine?.goals.reduce((acc, goal) => acc + (goal.completed ? goal.difficulty : 0), 0) || 0;
@@ -115,15 +159,15 @@ export default function RoutinePage() {
     const totalCompletedPoints = totalTaskPoints + totalGoalPoints;
 
     const totalPossiblePoints = useMemo(() => {
-        const tasksPoints = dailyTasks.reduce((acc, task) => acc + task.points, 0);
+        const tasksPoints = routineTasks?.reduce((acc, task) => acc + task.points, 0) || 0;
         const goalsPoints = routine?.goals.reduce((acc, goal) => acc + (goal.text ? goal.difficulty : 0), 0) || 0;
         return tasksPoints + goalsPoints;
-    }, [routine]);
+    }, [routine, routineTasks]);
     
     const progress = totalPossiblePoints > 0 ? (totalCompletedPoints / totalPossiblePoints) * 100 : 0;
     
-    const completedCount = completedTasks.length + (routine?.goals.filter(g => g.completed).length || 0);
-    const totalCount = dailyTasks.length + (routine?.goals.filter(g => !!g.text).length || 0);
+    const completedCount = (routine?.completedTasks.length || 0) + (routine?.goals.filter(g => g.completed).length || 0);
+    const totalCount = (routineTasks?.length || 0) + (routine?.goals.filter(g => !!g.text).length || 0);
     
     return (
         <div className="container mx-auto py-8 max-w-4xl">
@@ -158,14 +202,34 @@ export default function RoutinePage() {
                        <FocusRoutineAccordion routine={routine} setRoutine={setRoutine} />
                     )}
 
-                    {dailyTasks.map(task => (
-                        <TaskCard 
-                            key={task.id} 
-                            task={task} 
-                            isCompleted={completedTasks.includes(task.id)}
-                            onToggle={() => handleTaskToggle(task.id)}
-                        />
-                    ))}
+                    {(tasksLoading || isLoading) ? (
+                         <Card>
+                            <CardHeader>
+                                <CardTitle>Tareas Diarias</CardTitle>
+                            </CardHeader>
+                            <CardContent className="flex items-center justify-center h-48">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        routineTasks?.map(task => (
+                            <TaskCard 
+                                key={task.id} 
+                                task={task} 
+                                isCompleted={routine?.completedTasks.includes(task.id) || false}
+                                onToggle={() => handleTaskToggle(task.id)}
+                                onDelete={() => handleDeleteTask(task.id)}
+                            />
+                        ))
+                    )}
+                     <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+                        <DialogTrigger asChild>
+                             <Button variant="outline" className="w-full">
+                                <Plus className="mr-2 h-4 w-4" /> Añadir Tarea Personalizada
+                            </Button>
+                        </DialogTrigger>
+                        <TaskDialogContent onFinished={() => setIsTaskDialogOpen(false)} />
+                    </Dialog>
                 </div>
 
                 <div className="space-y-4">
@@ -202,9 +266,9 @@ export default function RoutinePage() {
     );
 }
 
-function TaskCard({ task, isCompleted, onToggle }: { task: {id: string, title: string, description: string, points: number}, isCompleted: boolean, onToggle: () => void }) {
+function TaskCard({ task, isCompleted, onToggle, onDelete }: { task: WithId<RoutineTask>, isCompleted: boolean, onToggle: () => void, onDelete: () => void }) {
     return (
-        <Card className={`transition-all duration-300 ${isCompleted ? 'border-primary/50 bg-card/50' : 'border-border hover:border-primary/50'}`}>
+        <Card className={`transition-all duration-300 group ${isCompleted ? 'border-primary/50 bg-card/50' : 'border-border hover:border-primary/50'}`}>
             <CardContent className="p-4 flex items-center gap-4">
                 <Checkbox id={task.id} checked={isCompleted} onCheckedChange={onToggle} className="h-8 w-8 rounded-md border-2" />
                 <div className="flex-1 grid gap-0.5">
@@ -215,6 +279,9 @@ function TaskCard({ task, isCompleted, onToggle }: { task: {id: string, title: s
                     <span className={`font-bold text-lg ${isCompleted ? 'text-primary' : 'text-muted-foreground'}`}>{task.points}</span>
                     <span className="text-xs text-muted-foreground">pts</span>
                 </div>
+                <Button onClick={onDelete} variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
                 {isCompleted && <CheckCircle2 className="h-6 w-6 text-[hsl(var(--chart-2))]" />}
             </CardContent>
         </Card>
@@ -267,6 +334,7 @@ function FocusRoutineAccordion({ routine, setRoutine }: { routine: WithId<FocusR
                                         checked={goal.completed}
                                         onCheckedChange={(checked) => handleGoalChange(index, 'completed', !!checked)}
                                         className="h-6 w-6"
+                                        disabled={!goal.text}
                                     />
                                     <Input
                                         placeholder={`Objetivo ${index + 1}`}
@@ -377,3 +445,68 @@ function DailyPlanCard({ routine, setRoutine }: { routine: WithId<FocusRoutine> 
         </Card>
     );
 }
+
+function TaskDialogContent({ onFinished }: { onFinished: () => void }) {
+    const { user } = useAuth();
+    const firestore = useFirestore();
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [points, setPoints] = useState(10);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSubmit = async () => {
+        if (!user || !title || !description) return;
+        setIsSaving(true);
+        const tasksCollectionRef = collection(firestore, `users/${user.uid}/routine_tasks`);
+        try {
+            await addDoc(tasksCollectionRef, {
+                userId: user.uid,
+                title,
+                description,
+                points,
+                createdAt: serverTimestamp(),
+            });
+            onFinished();
+        } catch (error) {
+            console.error("Error adding new task: ", error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Añadir Tarea Personalizada</DialogTitle>
+                <DialogDescription>
+                    Define una nueva tarea para tu rutina diaria.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                    <Label htmlFor="title">Título</Label>
+                    <Input id="title" value={title} onChange={e => setTitle(e.target.value)} placeholder="Ej: Leer 10 páginas"/>
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="description">Descripción</Label>
+                    <Input id="description" value={description} onChange={e => setDescription(e.target.value)} placeholder="Ej: Un hábito para crecer"/>
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="points">Puntos de Disciplina</Label>
+                    <Input id="points" type="number" value={points} onChange={e => setPoints(Number(e.target.value))} placeholder="10"/>
+                </div>
+            </div>
+            <DialogFooter>
+                 <DialogClose asChild>
+                    <Button variant="outline">Cancelar</Button>
+                </DialogClose>
+                <Button onClick={handleSubmit} disabled={isSaving}>
+                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                    Guardar Tarea
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    );
+}
+
+    

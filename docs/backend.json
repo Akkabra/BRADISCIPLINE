@@ -196,6 +196,42 @@
         "dont",
         "motivation"
       ]
+    },
+    "RoutineTask": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RoutineTask",
+      "type": "object",
+      "description": "Represents a custom, repeatable task in a user's daily routine.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who owns this task."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title or name of the task."
+        },
+        "description": {
+          "type": "string",
+          "description": "A short description of the task."
+        },
+        "points": {
+          "type": "number",
+          "description": "Discipline points awarded for completing the task."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the task was created."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "description",
+        "points",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -301,9 +337,30 @@
             }
           ]
         }
+      },
+       {
+        "path": "/users/{userId}/routine_tasks/{taskId}",
+        "definition": {
+          "entityName": "RoutineTask",
+          "schema": {
+            "$ref": "#/backend/entities/RoutineTask"
+          },
+          "description": "Stores custom daily routine tasks for a user. Path-based ownership ensures a user can only access their own tasks.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "taskId",
+              "description": "The unique ID for the routine task document."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "This Firestore structure is designed to support user authentication and data storage for the 'Bra Discipline' application. It prioritizes authorization independence and clear access patterns.\n\n*   **/users/{userId}**:  Stores user profiles.  This enables path-based ownership, simplifying security rules (only the authenticated user can access their own profile).\n*   **/users/{userId}/family_events/{eventId}**: Stores planned family events. This nested structure ensures user ownership and simplifies security rules.\n*   **/users/{userId}/connection_tasks/{taskId}**: Stores family connection tasks. This subcollection also leverages path-based ownership for secure data access.\n*   **/users/{userId}/goals/{goalId}**: Stores user-defined goals. This subcollection also leverages path-based ownership for secure data access.\n*   **/users/{userId}/focus_routines/{routineId}**: Stores daily focus routines and goals. This subcollection uses path-based ownership for security.\n\n\n**Authorization Independence:**\n\nAuthorization independence is achieved through path-based ownership for all user-related data. This eliminates the need for `get()` calls in security rules to determine access, making rules more efficient and robust.\n\n**QAPs (Rules are not Filters):**\n\nThe structure supports secure `list` operations (QAPs) because all documents within a collection share the same security requirements. Listing data under a user's document is secure because the path inherently restricts access to that user's own data. The homogeneous security posture within each collection ensures that rules are not used as filters."
+    "reasoning": "This Firestore structure is designed to support user authentication and data storage for the 'Bra Discipline' application. It prioritizes authorization independence and clear access patterns.\n\n*   **/users/{userId}**:  Stores user profiles.  This enables path-based ownership, simplifying security rules (only the authenticated user can access their own profile).\n*   **/users/{userId}/family_events/{eventId}**: Stores planned family events. This nested structure ensures user ownership and simplifies security rules.\n*   **/users/{userId}/connection_tasks/{taskId}**: Stores family connection tasks. This subcollection also leverages path-based ownership for secure data access.\n*   **/users/{userId}/goals/{goalId}**: Stores user-defined goals. This subcollection also leverages path-based ownership for secure data access.\n*   **/users/{userId}/focus_routines/{routineId}**: Stores daily focus routines and goals. This subcollection uses path-based ownership for security.\n*   **/users/{userId}/routine_tasks/{taskId}**: Stores custom daily routine tasks. This subcollection uses path-based ownership for security.\n\n\n**Authorization Independence:**\n\nAuthorization independence is achieved through path-based ownership for all user-related data. This eliminates the need for `get()` calls in security rules to determine access, making rules more efficient and robust.\n\n**QAPs (Rules are not Filters):**\n\nThe structure supports secure `list` operations (QAPs) because all documents within a collection share the same security requirements. Listing data under a user's document is secure because the path inherently restricts access to that user's own data. The homogeneous security posture within each collection ensures that rules are not used as filters."
   }
 }
+
     
