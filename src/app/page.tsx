@@ -35,16 +35,16 @@ export default function LandingPage() {
             <div className="flex flex-col justify-center space-y-6 max-w-3xl mx-auto">
               <div className="space-y-4">
                 <h1 className="text-4xl font-headline tracking-tighter sm:text-6xl xl:text-7xl/none text-primary">
-                  FORJA TU DISCIPLINA. RECONSTRUYE TU VIDA.
+                  UN INTENTO POR RECUPERARLO TODO
                 </h1>
-                <p className="max-w-[600px] text-muted-foreground md:text-xl mx-auto">
-                  BRA DISCIPLINE es tu gimnasio mental y espiritual. Una herramienta para hombres decididos a tomar el control a través de la constancia, el enfoque y un propósito claro.
+                <p className="max-w-[700px] text-muted-foreground md:text-xl mx-auto">
+                  Esto no es un gimnasio mental. Es el intento desesperado de un padre, esposo y programador por recuperar a su familia y por ser el hombre que ellos merecen.
                 </p>
               </div>
               <div className="flex w-full max-w-sm mx-auto">
                 <Button asChild size="lg" className="w-full font-bold tracking-wider">
                   <Link href="/login">
-                    EMPIEZA TU TRANSFORMACIÓN
+                    EMPIEZA EL CAMINO
                   </Link>
                 </Button>
               </div>
@@ -56,10 +56,10 @@ export default function LandingPage() {
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
-                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm text-primary font-semibold">EL ARSENAL</div>
-                <h2 className="text-3xl font-headline tracking-tighter sm:text-5xl">El Arsenal de tu Disciplina</h2>
+                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm text-primary font-semibold">LAS HERRAMIENTAS</div>
+                <h2 className="text-3xl font-headline tracking-tighter sm:text-5xl">Las Herramientas del Camino</h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Todo lo que necesitas para construir la versión más fuerte de ti mismo, día a día.
+                  Funciones creadas no para impresionar, sino para servir como anclas en la tormenta.
                 </p>
               </div>
             </div>
@@ -105,22 +105,23 @@ export default function LandingPage() {
                 La disciplina es el puente entre tus metas y tus logros.
               </h2>
               <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                Deja de esperar la motivación. Es hora de construir algo real. Únete a BRA DISCIPLINE.
+                Deja de esperar la motivación. Es hora de construir algo real.
               </p>
             </div>
             <div className="mx-auto w-full max-w-sm space-y-2">
                <Button asChild size="lg" className="w-full font-bold tracking-wider">
                   <Link href="/login">
-                    CONSTRUYE TU LEGADO
+                    EMPEZAR
                   </Link>
                 </Button>
             </div>
           </div>
         </section>
       </main>
-      <footer className="flex flex-col gap-4 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t border-border/50">
+      <footer className="flex flex-col gap-6 sm:flex-row py-8 w-full shrink-0 items-center px-4 md:px-6 border-t border-border/50">
         <div className="flex-1 text-center sm:text-left">
-            <p className="text-xs text-muted-foreground italic">
+            <h4 className="font-headline text-lg text-primary">UNA NOTA PERSONAL</h4>
+            <p className="text-sm text-muted-foreground italic mt-2 max-w-xl">
                 Dedicado a mi mujer, mi hijo y mi familia. Por ellos hago todo esto, porque son todo lo que me importa en la vida. <br/> En esta app dejo constancia que el primero en recuperar su vida, seré yo.
             </p>
         </div>
