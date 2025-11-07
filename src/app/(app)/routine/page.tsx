@@ -508,5 +508,3 @@ function TaskDialogContent({ onFinished }: { onFinished: () => void }) {
         </DialogContent>
     );
 }
-
-    
