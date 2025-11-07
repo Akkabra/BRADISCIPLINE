@@ -118,16 +118,23 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t border-border/50">
-        <p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} BRA DISCIPLINE. Todos los derechos reservados.</p>
-        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-          <Link href="#" className="text-xs hover:underline underline-offset-4">
-            Términos de Servicio
-          </Link>
-          <Link href="#" className="text-xs hover:underline underline-offset-4">
-            Privacidad
-          </Link>
-        </nav>
+      <footer className="flex flex-col gap-4 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t border-border/50">
+        <div className="flex-1 text-center sm:text-left">
+            <p className="text-xs text-muted-foreground italic">
+                Dedicado a mi mujer, mi hijo y mi familia. Por ellos hago todo esto, porque son todo lo que me importa en la vida. <br/> En esta app dejo constancia que el primero en recuperar su vida, seré yo.
+            </p>
+        </div>
+        <div className="flex-1 text-center sm:text-right">
+            <p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} BRA DISCIPLINE. Todos los derechos reservados.</p>
+            <nav className="sm:ml-auto sm:justify-end flex justify-center gap-4 sm:gap-6 mt-2">
+            <Link href="#" className="text-xs hover:underline underline-offset-4">
+                Términos de Servicio
+            </Link>
+            <Link href="#" className="text-xs hover:underline underline-offset-4">
+                Privacidad
+            </Link>
+            </nav>
+        </div>
       </footer>
     </div>
   );
