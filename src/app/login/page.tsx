@@ -13,7 +13,8 @@ import {
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  User
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
@@ -38,23 +39,26 @@ export default function LoginPage() {
       router.push('/dashboard');
     }
   }, [user, isUserLoading, router]);
+  
+  const updateUserProfile = async (user: User) => {
+    const userRef = doc(firestore, "users", user.uid);
+    const profileData = {
+      id: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL
+    };
+    // Use merge:true to create the doc if it doesn't exist, or update it if it does.
+    await setDoc(userRef, profileData, { merge: true });
+  }
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      
-      const userRef = doc(firestore, "users", user.uid);
-      await setDoc(userRef, {
-        id: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL
-      }, { merge: true });
-
-      // Redirect will be handled by the useEffect
+      await updateUserProfile(result.user);
+      // Redirect is handled by useEffect
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -69,27 +73,25 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
+      let userCredential;
       if (isSignUp) {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+        userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const firstName = email.split('@')[0];
         
-        await updateProfile(user, {
+        // Update Firebase Auth profile
+        await updateProfile(userCredential.user, {
           displayName: firstName,
         });
 
-        const userRef = doc(firestore, "users", user.uid);
-        await setDoc(userRef, {
-            id: user.uid,
-            email: user.email,
-            displayName: firstName,
-            photoURL: user.photoURL, // photoURL will be null here
-        });
+        // This will create the user document in Firestore.
+        await updateUserProfile(userCredential.user);
 
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        userCredential = await signInWithEmailAndPassword(auth, email, password);
+        // This will ensure the user document exists, even if sign-up failed to create it.
+        await updateUserProfile(userCredential.user);
       }
-      // Redirect will be handled by the useEffect
+      // Redirect is handled by useEffect
     } catch (error: any) {
       toast({
         variant: 'destructive',
