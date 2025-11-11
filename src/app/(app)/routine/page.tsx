@@ -46,13 +46,6 @@ const difficulties = [
     { label: 'Difícil', value: 30 },
 ];
 
-const defaultTasks: Omit<RoutineTask, 'userId' | 'createdAt'>[] = [
-    { title: 'Ducha Fría', description: 'Activa tu cuerpo y mente. Sin excusas.', points: 10 },
-    { title: '1 Hora de Proyecto/Pasión', description: 'Construye tu futuro. Invierte en ti.', points: 10 },
-    { title: 'Reflexión Nocturna', description: 'Evalúa tu día. Aprende. Mejora.', points: 10 },
-];
-
-
 export default function RoutinePage() {
     const { user } = useAuth();
     const firestore = useFirestore();
@@ -104,27 +97,10 @@ export default function RoutinePage() {
             setIsLoading(false);
         }
     }, [user, firestore, todayString]);
-
-    const seedDefaultTasks = useCallback(async () => {
-        if(user && firestore && !tasksLoading && routineTasks?.length === 0) {
-            const tasksCollectionRef = collection(firestore, `users/${user.uid}/routine_tasks`);
-            for(const task of defaultTasks) {
-                await addDoc(tasksCollectionRef, {
-                    ...task,
-                    userId: user.uid,
-                    createdAt: serverTimestamp(),
-                });
-            }
-        }
-    }, [user, firestore, tasksLoading, routineTasks]);
     
     useEffect(() => {
         getOrCreateRoutine();
     }, [getOrCreateRoutine]);
-
-    useEffect(() => {
-        seedDefaultTasks();
-    }, [seedDefaultTasks]);
 
     const handleTaskToggle = async (taskId: string) => {
         if (!routine) return;
